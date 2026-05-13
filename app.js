@@ -1,10 +1,6 @@
 const MARROM = '#6b4226';
 const STORAGE_KEY = 'rh_cosmetics_admin_web_v1';
-const AUTH_KEY = 'rh_cosmetics_auth_v1';
-const API_KEY = 'rh_cosmetics_api_url';
-let API_URL = localStorage.getItem(API_KEY) || 'http://localhost:3001/api';
-let auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
-let apiOnline = false;
+const AUTH_KEY = 'rh_cosmetics_admin_auth_v1';
 
 function deepClone(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
@@ -15,9 +11,9 @@ function getInitialDatabase() {
   return deepClone(window.RH_DATABASE || {});
 }
 
-let state = loadLocalState();
+let state = loadState();
 
-function loadLocalState() {
+function loadState() {
   const initial = getInitialDatabase();
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
@@ -27,45 +23,41 @@ function loadLocalState() {
     return initial;
   }
 }
-
-async function apiFetch(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Erro na API');
-  return data;
-}
-
-async function hydrateStateFromApi() {
-  if (!auth?.token) return false;
-  try {
-    const remoteState = await apiFetch('/state');
-    if (remoteState && Object.keys(remoteState).length) {
-      state = { ...getInitialDatabase(), ...remoteState };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-    apiOnline = true;
-    return true;
-  } catch (error) {
-    apiOnline = false;
-    return false;
-  }
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  if (auth?.token && apiOnline) {
-    apiFetch('/state', { method: 'PUT', body: JSON.stringify(state) }).catch(() => { apiOnline = false; });
-  }
-}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 const $ = (selector) => document.querySelector(selector);
 const app = $('#app');
+
+function currentAdmin() {
+  const usuario = localStorage.getItem(AUTH_KEY);
+  if (!usuario) return null;
+  return state.usuarios.find(u => u.usuario === usuario && u.tipo === 'admin') || null;
+}
+function isLoggedIn() { return !!currentAdmin(); }
+function updateAuthView() {
+  const logged = isLoggedIn();
+  const loginScreen = $('#loginScreen');
+  const adminShell = $('#adminShell');
+  if (loginScreen) loginScreen.classList.toggle('hidden', logged);
+  if (adminShell) adminShell.classList.toggle('hidden', !logged);
+}
+function setupLogin() {
+  const form = $('#loginForm');
+  if (!form) return;
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const usuario = $('#loginUser').value.trim();
+    const senha = $('#loginPass').value.trim();
+    const admin = state.usuarios.find(u => u.usuario === usuario && u.senha === senha && u.tipo === 'admin');
+    if (!admin) {
+      $('#loginError').classList.remove('hidden');
+      return;
+    }
+    $('#loginError').classList.add('hidden');
+    localStorage.setItem(AUTH_KEY, admin.usuario);
+    updateAuthView();
+    render();
+  };
+}
 
 function funcionarios() { return state.usuarios.filter(u => u.tipo === 'funcionario'); }
 function admins() { return state.usuarios.filter(u => u.tipo === 'admin'); }
@@ -621,7 +613,7 @@ function showHoleritesModal(tipo = 'todos', custom = null) {
 
 function renderPerfil() {
   setHeader('Perfil', 'Dados do administrador');
-  const admin = state.usuarios.find(u => u.nome === 'Anna Luiza') || admins()[0];
+  const admin = currentAdmin() || state.usuarios.find(u => u.nome === 'Anna Luiza') || admins()[0];
   const d = dashboardData();
   const demandas = d.pendentes + d.holeritesPendentes;
   const recentes = [
@@ -711,80 +703,19 @@ function render() {
   if (state.page === 'perfil') renderPerfil();
 }
 
-function showLogin(message = '') {
-  $('#loginScreen').classList.remove('hidden');
-  $('#appShell').classList.add('hidden');
-  $('#apiUrlInput').value = API_URL;
-  if (message) $('#loginMessage').textContent = message;
-}
-
-function showApp() {
-  $('#loginScreen').classList.add('hidden');
-  $('#appShell').classList.remove('hidden');
-}
-
-async function handleLogin(event) {
-  event.preventDefault();
-  const usuario = $('#loginUsuario').value.trim();
-  const senha = $('#loginSenha').value.trim();
-  API_URL = ($('#apiUrlInput').value || API_URL).trim().replace(/\/$/, '');
-  localStorage.setItem(API_KEY, API_URL);
-
-  try {
-    const data = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario, senha }),
-    }).then(async (res) => {
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message || 'Login inválido');
-      return json;
-    });
-
-    auth = data;
-    localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
-    await hydrateStateFromApi();
-    showApp();
-    bindAppEvents();
-    render();
-  } catch (error) {
-    const user = admins().find((item) => item.usuario === usuario);
-    if (user && senha === '1234') {
-      auth = { token: null, user, local: true };
-      localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
-      apiOnline = false;
-      showApp();
-      bindAppEvents();
-      render();
-      alert('API não encontrada. Entrando em modo local para apresentação. Para compartilhar com mobile, rode o backend MongoDB.');
-      return;
-    }
-    $('#loginMessage').textContent = error.message || 'Não foi possível entrar.';
-  }
-}
-
-function bindAppEvents() {
+function init() {
   document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => { $('#sidebar').classList.remove('open'); setPage(btn.dataset.page); });
   $('#mobileMenu').onclick = () => $('#sidebar').classList.toggle('open');
   $('#profileBtn').onclick = () => $('#profileDropdown').classList.toggle('hidden');
   $('#profileDropdown').querySelector('[data-page="perfil"]').onclick = () => { $('#profileDropdown').classList.add('hidden'); setPage('perfil'); };
-  $('#logoutBtn').onclick = () => { localStorage.removeItem(AUTH_KEY); auth = null; showLogin('Sessão encerrada.'); };
+  $('#logoutBtn').onclick = () => { localStorage.removeItem(AUTH_KEY); $('#profileDropdown').classList.add('hidden'); updateAuthView(); };
   $('#modalClose').onclick = closeModal;
   $('#modalBackdrop').onclick = (e) => { if (e.target.id === 'modalBackdrop') closeModal(); };
   $('#fontPlus').onclick = () => { state.fontScale = Math.min(1.25, +(state.fontScale + .08).toFixed(2)); saveState(); render(); };
   $('#fontMinus').onclick = () => { state.fontScale = Math.max(.9, +(state.fontScale - .08).toFixed(2)); saveState(); render(); };
-}
-
-async function init() {
-  $('#loginForm').onsubmit = handleLogin;
-  if (!auth) {
-    showLogin();
-    return;
-  }
-  await hydrateStateFromApi();
-  showApp();
-  bindAppEvents();
-  render();
+  setupLogin();
+  updateAuthView();
+  if (isLoggedIn()) render();
 }
 
 init();
