@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RH Cosmetics | Admin Web</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-block">
+        <div class="brand-logo">RH</div>
+        <div>
+          <strong>RH Cosmetics</strong>
+          <span>Área administrativa</span>
+        </div>
+      </div>
+
+      <nav class="side-nav" aria-label="Navegação administrativa">
+        <button class="nav-btn active" data-page="home">Home</button>
+        <button class="nav-btn" data-page="beneficios">Benefícios</button>
+        <button class="nav-btn" data-page="pessoal">Pessoal</button>
+        <button class="nav-btn" data-page="dashboard">Dashboard</button>
+        <button class="nav-btn" data-page="analytics">Analytics</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="outline-btn full" id="fontMinus">A-</button>
+        <button class="outline-btn full" id="fontPlus">A+</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="top-status-area"></div>
+
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu">Menu</button>
+        <div>
+          <h1 id="pageTitle">Home</h1>
+          <p id="pageSubtitle">Gerencie o portal dos funcionários</p>
+        </div>
+        <div class="profile-area">
+          <button class="profile-pill" id="profileBtn">ADM</button>
+          <div class="profile-dropdown hidden" id="profileDropdown">
+            <button data-page="perfil">Ver meu perfil</button>
+            <button class="danger" id="logoutBtn">Sair</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="page-content" id="app"></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal-card" id="modalCard">
+      <div class="modal-header">
+        <div>
+          <h2 id="modalTitle">Título</h2>
+          <p id="modalSubtitle">Detalhes</p>
+        </div>
+        <button class="icon-close" id="modalClose">Fechar</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
