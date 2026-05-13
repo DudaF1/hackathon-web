@@ -258,43 +258,131 @@ function renderDashboard() {
   setHeader('Dashboard', 'Indicadores executivos do RH');
   const d = dashboardData();
   const setores = sectorData();
+  const totalSolicitacoes = Math.max(state.solicitacoes.length, 1);
+  const aprovPct = Math.round(d.aprovadas / totalSolicitacoes * 100);
+  const pendPct = Math.round(d.pendentes / totalSolicitacoes * 100);
+  const negPct = Math.round(d.negadas / totalSolicitacoes * 100);
+  const tendencia = [74, 78, 81, 84, 87, d.compliance];
+  const totalDemandas = d.pendentes + d.holeritesPendentes;
+  const alertLevel = totalDemandas === 0 ? 'Operação estável' : totalDemandas <= 4 ? 'Atenção moderada' : 'Prioridade crítica';
+
   app.innerHTML = `
-    <div class="hero-card">
-      <div class="actions" style="justify-content:space-between">
-        <div><h2>Dashboard Executivo</h2><p>Indicadores de benefícios, pessoal, holerites e demandas em tempo real.</p></div>
-        <button class="outline-btn" id="toAnalytics">Abrir analytics</button>
+    <section class="executive-hero">
+      <div class="executive-hero-content">
+        <span class="eyebrow">Painel executivo · RH Cosmetics</span>
+        <h2>Dashboard Administrativo</h2>
+        <p>Visão geral de funcionários, benefícios, holerites, solicitações e alertas operacionais do RH.</p>
+        <div class="hero-actions-row">
+          <button class="hero-action primary" id="toAnalytics">Abrir analytics</button>
+          <button class="hero-action" onclick="window.print()">Gerar relatório PDF</button>
+          <button class="hero-action" id="exportDashCsv">Exportar CSV</button>
+        </div>
       </div>
-      <div class="hero-metrics">
-        <button class="hero-metric" id="openCompliance"><strong>${d.compliance}%</strong><span>Conformidade global</span></button>
-        <button class="hero-metric" id="openDemandas"><strong>${d.pendentes + d.holeritesPendentes}</strong><span>Demandas abertas</span></button>
-        <button class="hero-metric" id="openFuncionarios"><strong>${d.totalFuncionarios}</strong><span>Funcionários</span></button>
+
+      <div class="executive-score-card">
+        <span class="score-label">Conformidade global</span>
+        <strong>${d.compliance}%</strong>
+        <div class="score-track"><div style="width:${d.compliance}%"></div></div>
+        <small>${alertLevel}</small>
       </div>
-    </div>
-    <div class="grid four">
-      <button class="card kpi-card clickable" id="kpiFunc"><div class="kpi-value">${d.totalFuncionarios}</div><div><div class="kpi-label">Funcionários</div><div class="kpi-trend">${setores.length} setores ativos</div></div></button>
-      <button class="card kpi-card kpi-warning clickable" id="kpiSolic"><div class="kpi-value">${d.pendentes}</div><div><div class="kpi-label">Solicitações abertas</div><div class="kpi-trend">Clique para detalhar</div></div></button>
-      <button class="card kpi-card kpi-danger clickable" id="kpiHol"><div class="kpi-value">${d.holeritesPendentes}</div><div><div class="kpi-label">Holerites pendentes</div><div class="kpi-trend">Aguardando assinatura</div></div></button>
-      <button class="card kpi-card clickable" id="kpiAprov"><div class="kpi-value">${d.aprovadas}</div><div><div class="kpi-label">Aprovadas</div><div class="kpi-trend">Solicitações finalizadas</div></div></button>
-    </div>
-    <div class="grid two" style="margin-top:16px">
-      <section class="card chart-card"><h3 class="card-title">Status das solicitações</h3><div class="donut-wrap"><div class="donut" style="--p:${Math.round(d.aprovadas / Math.max(state.solicitacoes.length, 1) * 100)}" data-label="${Math.round(d.aprovadas / Math.max(state.solicitacoes.length, 1) * 100)}% aprovadas"></div></div></section>
-      <section class="card chart-card"><h3 class="card-title">Volume operacional</h3>${verticalChart([
-        ['Solicitações', state.solicitacoes.length, MARROM], ['H. assinados', d.holeritesAssinados, '#16a34a'], ['H. pendentes', d.holeritesPendentes, '#ef4444'], ['Funcionários', d.totalFuncionarios, '#2563eb']
-      ])}</section>
-      <section class="card"><h3 class="card-title">Conformidade por setor</h3><div class="list">${setores.map(s => `<button class="list-item" data-sector="${s.setor}"><div><strong>${s.setor}</strong><span>${s.funcionarios} funcionários • ${s.pendencias} pendências</span><div class="progress-bar"><div class="progress-fill" style="width:${s.progresso}%"></div></div></div><span class="badge ${s.status === 'OK' ? 'green' : s.status === 'Atenção' ? 'yellow' : 'red'}">${s.status}</span></button>`).join('')}</div></section>
-      <section class="card"><h3 class="card-title">Alertas e pendências</h3><div class="list">
-        <button class="list-item" id="alertDemandas"><div><strong>${d.pendentes} solicitações esperando avaliação</strong><span>Pedidos enviados pelos funcionários.</span></div>${badge('Esperando avaliação')}</button>
-        <button class="list-item" id="alertHolerites"><div><strong>${d.holeritesPendentes} holerites sem assinatura</strong><span>Documentos pendentes.</span></div><span class="badge red">Crítico</span></button>
-        <button class="list-item" onclick="window.print()"><div><strong>Gerar relatório</strong><span>Use a impressão do navegador para salvar em PDF.</span></div><span class="badge blue">PDF</span></button>
-      </div></section>
-    </div>
+    </section>
+
+    <section class="dashboard-kpi-row">
+      <button class="metric-card metric-green" id="openCompliance">
+        <span class="metric-icon">✓</span>
+        <strong>${d.compliance}%</strong>
+        <small>Conformidade</small>
+        <em>${d.aprovadas} solicitações aprovadas</em>
+      </button>
+      <button class="metric-card metric-yellow" id="openDemandas">
+        <span class="metric-icon">!</span>
+        <strong>${totalDemandas}</strong>
+        <small>Demandas abertas</small>
+        <em>${d.pendentes} solicitações · ${d.holeritesPendentes} holerites</em>
+      </button>
+      <button class="metric-card metric-blue" id="openFuncionarios">
+        <span class="metric-icon">#</span>
+        <strong>${d.totalFuncionarios}</strong>
+        <small>Funcionários</small>
+        <em>${setores.length} setores ativos</em>
+      </button>
+      <button class="metric-card metric-red" id="kpiHol">
+        <span class="metric-icon">PDF</span>
+        <strong>${d.holeritesPendentes}</strong>
+        <small>Holerites pendentes</small>
+        <em>Aguardando assinatura</em>
+      </button>
+    </section>
+
+    <section class="dashboard-bento">
+      <article class="bento-card bento-large">
+        <div class="card-header tight">
+          <div>
+            <h3 class="card-title">Tendência de conformidade</h3>
+            <p class="card-sub">Histórico estimado dos últimos 6 meses</p>
+          </div>
+          <span class="badge green">+${Math.max(0, d.compliance - tendencia[0])} pts</span>
+        </div>
+        ${lineChart(tendencia, ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Atual'])}
+      </article>
+
+      <article class="bento-card">
+        <div class="card-header tight">
+          <div>
+            <h3 class="card-title">Status das solicitações</h3>
+            <p class="card-sub">Distribuição por situação</p>
+          </div>
+        </div>
+        ${donutMulti([
+          ['Aprovadas', aprovPct, '#16a34a'],
+          ['Em aberto', pendPct, '#f59e0b'],
+          ['Negadas', negPct, '#ef4444'],
+        ], `${aprovPct}%`, 'aprovadas')}
+      </article>
+
+      <article class="bento-card">
+        <h3 class="card-title">Volume operacional</h3>
+        ${verticalChart([
+          ['Solicitações', state.solicitacoes.length, MARROM],
+          ['H. assinados', d.holeritesAssinados, '#16a34a'],
+          ['H. pendentes', d.holeritesPendentes, '#ef4444'],
+          ['Funcionários', d.totalFuncionarios, '#2563eb']
+        ])}
+      </article>
+
+      <article class="bento-card bento-large">
+        <div class="card-header tight">
+          <div>
+            <h3 class="card-title">Conformidade por setor</h3>
+            <p class="card-sub">Clique em um setor para visualizar os funcionários</p>
+          </div>
+        </div>
+        <div class="sector-table-pro">
+          ${setores.map(s => `<button class="sector-pro-row" data-sector="${s.setor}">
+            <div><strong>${s.setor}</strong><span>${s.funcionarios} funcionários · ${s.pendencias} pendências</span></div>
+            <div class="sector-progress"><span>${s.progresso}%</span><div class="progress-bar"><div class="progress-fill" style="width:${s.progresso}%;background:${s.status === 'OK' ? '#16a34a' : s.status === 'Atenção' ? '#f59e0b' : '#ef4444'}"></div></div></div>
+            <span class="badge ${s.status === 'OK' ? 'green' : s.status === 'Atenção' ? 'yellow' : 'red'}">${s.status}</span>
+          </button>`).join('')}
+        </div>
+      </article>
+
+      <article class="bento-card">
+        <h3 class="card-title">Alertas e pendências</h3>
+        <div class="list">
+          <button class="alert-pro warning" id="alertDemandas"><strong>${d.pendentes} solicitações esperando avaliação</strong><span>Pedidos enviados pelos funcionários.</span></button>
+          <button class="alert-pro danger" id="alertHolerites"><strong>${d.holeritesPendentes} holerites sem assinatura</strong><span>Documentos pendentes.</span></button>
+          <button class="alert-pro info" id="openFuncionariosMini"><strong>${d.totalFuncionarios} funcionários cadastrados</strong><span>Toque para abrir a lista nominal.</span></button>
+        </div>
+      </article>
+    </section>
   `;
+
   $('#toAnalytics').onclick = () => setPage('analytics');
-  ['openFuncionarios','kpiFunc'].forEach(id => $('#'+id).onclick = () => showFuncionariosModal());
-  ['openDemandas','kpiSolic','alertDemandas'].forEach(id => $('#'+id).onclick = () => showDemandasModal());
+  $('#exportDashCsv').onclick = exportCSV;
+  ['openFuncionarios','openFuncionariosMini'].forEach(id => $('#'+id).onclick = () => showFuncionariosModal());
+  ['openDemandas','alertDemandas'].forEach(id => $('#'+id).onclick = () => showDemandasModal());
   ['kpiHol','alertHolerites'].forEach(id => $('#'+id).onclick = () => showHoleritesModal('pendentes'));
   $('#openCompliance').onclick = () => showSolicitacoesModal('Aprovado');
-  $('#kpiAprov').onclick = () => showSolicitacoesModal('Aprovado');
   document.querySelectorAll('[data-sector]').forEach(btn => btn.onclick = () => showFuncionariosModal(btn.dataset.sector));
 }
 
@@ -311,6 +399,53 @@ function sectorData() {
 function verticalChart(items) {
   const max = Math.max(...items.map(i => i[1]), 1);
   return `<div class="vertical-chart">${items.map(([label, value, color]) => `<div class="vbar"><strong>${value}</strong><div class="vbar-fill" style="height:${Math.max(14, value/max*190)}px;background:${color}"></div><span class="vbar-label">${label}</span></div>`).join('')}</div>`;
+}
+
+function lineChart(values, labels) {
+  const width = 620;
+  const height = 220;
+  const padding = 26;
+  const min = Math.min(...values, 60) - 4;
+  const max = Math.max(...values, 100) + 2;
+  const points = values.map((value, index) => {
+    const x = padding + index * ((width - padding * 2) / Math.max(values.length - 1, 1));
+    const y = height - padding - ((value - min) / Math.max(max - min, 1)) * (height - padding * 2);
+    return { x, y, value, label: labels[index] };
+  });
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const area = `${path} L ${points.at(-1).x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
+
+  return `<div class="line-chart-wrap">
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfico de tendência de conformidade">
+      <defs>
+        <linearGradient id="lineFill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#6b4226" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="#6b4226" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${[0,1,2,3].map(i => `<line x1="${padding}" x2="${width-padding}" y1="${padding+i*45}" y2="${padding+i*45}" class="chart-grid-line"/>`).join('')}
+      <path d="${area}" fill="url(#lineFill)"></path>
+      <path d="${path}" class="trend-line"></path>
+      ${points.map(p => `<g><circle cx="${p.x}" cy="${p.y}" r="5" class="trend-dot"/><text x="${p.x}" y="${p.y-12}" text-anchor="middle" class="trend-value">${p.value}%</text><text x="${p.x}" y="${height-5}" text-anchor="middle" class="trend-label">${p.label}</text></g>`).join('')}
+    </svg>
+  </div>`;
+}
+
+function donutMulti(items, center, subtitle) {
+  let current = 0;
+  const segments = items.map(([label, value, color]) => {
+    const start = current;
+    current += value;
+    return `${color} ${start}% ${current}%`;
+  }).join(', ');
+  return `<div class="donut-pro-wrap">
+    <div class="donut-pro" style="background:conic-gradient(${segments || '#eadbd2 0% 100%'})">
+      <div><strong>${center}</strong><span>${subtitle}</span></div>
+    </div>
+    <div class="donut-legend">
+      ${items.map(([label, value, color]) => `<div><i style="background:${color}"></i><span>${label}</span><strong>${value}%</strong></div>`).join('')}
+    </div>
+  </div>`;
 }
 
 function renderAnalytics() {
@@ -526,8 +661,75 @@ function showHoleritesModal(tipo = 'todos', custom = null) {
 
 function renderPerfil() {
   setHeader('Perfil', 'Dados do administrador');
-  app.innerHTML = `<div class="page-heading"><h2>Perfil</h2><p>Dados do administrador</p></div><div class="card"><div class="brand-block" style="color:var(--texto)"><div class="brand-logo" style="background:var(--bege-2);color:var(--marrom)">A</div><div><strong>Anna Luiza</strong><span>Recursos Humanos • Coordenadora de RH</span></div></div><div class="grid three" style="margin-top:18px"><div class="card"><strong>Setor</strong><p>Recursos Humanos</p></div><div class="card"><strong>Função</strong><p>Coordenadora de RH</p></div><div class="card"><strong>Salário</strong><p>R$ 4.800,00</p></div></div></div>`;
+  const admin = state.usuarios.find(u => u.nome === 'Anna Luiza') || admins()[0];
+  const d = dashboardData();
+  const demandas = d.pendentes + d.holeritesPendentes;
+  const recentes = [
+    ['Solicitação aprovada', 'Exame periódico · Maria Eduarda', '08/05/2026'],
+    ['Dependente em análise', 'Santa Helena · Lucas Ferreira', '13/05/2026'],
+    ['Holerite pendente', 'Abril/2026 · Sarah', '05/05/2026'],
+  ];
+
+  app.innerHTML = `
+    <section class="profile-hero-pro">
+      <div class="profile-cover"></div>
+      <div class="profile-main-row">
+        <div class="profile-avatar-pro">${admin.nome.split(' ').map(p => p[0]).slice(0,2).join('')}</div>
+        <div class="profile-info-pro">
+          <span class="eyebrow">Administrador do portal</span>
+          <h2>${admin.nome}</h2>
+          <p>${admin.setor} · Coordenadora de RH</p>
+          <div class="profile-tags"><span>Admin master</span><span>Acesso: benefícios</span><span>Acesso: pessoal</span></div>
+        </div>
+        <div class="profile-actions-pro">
+          <button class="primary-btn" id="profileDashboard">Ver dashboard</button>
+          <button class="outline-btn" id="profileExport">Exportar funcionários</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-layout-pro">
+      <div class="profile-left-col">
+        <div class="card profile-section-card">
+          <h3 class="card-title">Informações profissionais</h3>
+          <div class="profile-info-grid-pro">
+            <div><span>Setor</span><strong>${admin.setor}</strong></div>
+            <div><span>Função</span><strong>Coordenadora de RH</strong></div>
+            <div><span>Salário</span><strong>R$ 4.800,00</strong></div>
+            <div><span>Usuário</span><strong>${admin.usuario}</strong></div>
+            <div><span>Idade</span><strong>${admin.idade} anos</strong></div>
+            <div><span>Transportadora</span><strong>${admin.transportadora.nome}</strong></div>
+          </div>
+        </div>
+
+        <div class="card profile-section-card">
+          <h3 class="card-title">Atividade recente</h3>
+          <div class="timeline-pro">
+            ${recentes.map(([titulo, desc, data]) => `<div class="timeline-item-pro"><i></i><div><strong>${titulo}</strong><span>${desc}</span></div><em>${data}</em></div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <aside class="profile-right-col">
+        <button class="profile-stat-card" id="profileDemandas"><strong>${demandas}</strong><span>Demandas abertas</span></button>
+        <button class="profile-stat-card" id="profileFuncionarios"><strong>${d.totalFuncionarios}</strong><span>Funcionários</span></button>
+        <button class="profile-stat-card" id="profileHolerites"><strong>${d.holeritesPendentes}</strong><span>Holerites pendentes</span></button>
+        <div class="card profile-contact-card">
+          <h3>Contato interno</h3>
+          <p>Telefone: (11) 4002-8922</p>
+          <p>E-mail: rh@lipsoncosmeticos.com.br</p>
+        </div>
+      </aside>
+    </section>
+  `;
+
+  $('#profileDashboard').onclick = () => setPage('dashboard');
+  $('#profileExport').onclick = exportCSV;
+  $('#profileDemandas').onclick = showDemandasModal;
+  $('#profileFuncionarios').onclick = () => showFuncionariosModal();
+  $('#profileHolerites').onclick = () => showHoleritesModal('pendentes');
 }
+
 
 function exportCSV() {
   const rows = [['Nome','Setor','Cargo','Transportadora'], ...funcionarios().map(f => [f.nome, f.setor, f.cargo || '', f.transportadora.nome])];
