@@ -1,109 +1,69 @@
 const MARROM = '#6b4226';
 const STORAGE_KEY = 'rh_cosmetics_admin_web_v1';
+const AUTH_KEY = 'rh_cosmetics_auth_v1';
+const API_KEY = 'rh_cosmetics_api_url';
+let API_URL = localStorage.getItem(API_KEY) || 'http://localhost:3001/api';
+let auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
+let apiOnline = false;
 
-const initialState = {
-  fontScale: 1,
-  page: 'home',
-  muralAtual: 0,
-  selectedBenefit: null,
-  selectedPessoal: null,
-  selectedSector: 'Todos',
-  funcionariosModalFilter: null,
-  murais: [
-    { id: 1, titulo: 'Campanha Dia das Mães', descricao: 'Celebre o Dia das Mães com Lipson', imagem: 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&q=80&w=1200' },
-    { id: 2, titulo: 'Campanha interna', descricao: 'Comunicados e novidades da empresa', imagem: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=1200' },
-    { id: 3, titulo: 'Treinamento', descricao: 'Novos treinamentos disponíveis', imagem: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=1200' },
-    { id: 4, titulo: 'Avisos do RH', descricao: 'Fique atento aos comunicados importantes', imagem: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=1200' },
-  ],
-  avisos: [
-    { id: 1, titulo: 'Aviso importante', descricao: 'Terá vistoria no setor de produção amanhã às 9h.', data: '12/05/2026' },
-  ],
-  votacoes: [
-    {
-      id: 1,
-      ativa: true,
-      pergunta: 'Tiradentes: qual opção você prefere?',
-      data: '12/05/2026',
-      votosUsuarios: {
-        'Sarah': 1,
-        'Maria Eduarda': 2,
-        'Pedro': 1,
-        'Lucas Ferreira': 3,
-        'Camila Rocha': 1,
-      },
-      opcoes: [
-        { id: 1, texto: 'Folgar no dia de Tiradentes' },
-        { id: 2, texto: 'Folgar na segunda-feira' },
-        { id: 3, texto: 'Trabalhar no dia e folgar sexta' },
-      ],
-    },
-  ],
-  usuarios: [
-    { nome: 'Anna Luiza', usuario: '01@adm', tipo: 'admin', idade: 28, setor: 'Recursos Humanos', transportadora: { nome: 'TOP', link: 'https://www.boradetop.com.br/' } },
-    { nome: 'Anna Beatriz', usuario: '02@adm', tipo: 'admin', idade: 31, setor: 'Recursos Humanos', transportadora: { nome: 'Alelo', link: 'https://www.alelo.com.br/' } },
-    { nome: 'Ana Beatriz', usuario: '03@adm', tipo: 'admin', idade: 29, setor: 'Departamento Pessoal', transportadora: { nome: 'Flash', link: 'https://flashapp.com.br/' } },
-    { nome: 'Sarah', usuario: '01@func', tipo: 'funcionario', idade: 45, setor: 'Produção', cargo: 'Operadora de produção', transportadora: { nome: 'TOP', link: 'https://www.boradetop.com.br/' } },
-    { nome: 'Maria Eduarda', usuario: '02@func', tipo: 'funcionario', idade: 39, setor: 'Vendas', cargo: 'Atendente comercial', transportadora: { nome: 'Alelo', link: 'https://www.alelo.com.br/' } },
-    { nome: 'Pedro', usuario: '03@func', tipo: 'funcionario', idade: 42, setor: 'Logística', cargo: 'Auxiliar de logística', transportadora: { nome: 'Flash', link: 'https://flashapp.com.br/' } },
-    { nome: 'Lucas Ferreira', usuario: '04@func', tipo: 'funcionario', idade: 26, setor: 'TI', cargo: 'Analista de suporte', transportadora: { nome: 'SOU', link: 'https://www.cartaosou.com.br/' } },
-    { nome: 'Camila Rocha', usuario: '05@func', tipo: 'funcionario', idade: 30, setor: 'Marketing', cargo: 'Assistente de marketing', transportadora: { nome: 'SPTrans', link: 'https://www.sptrans.com.br/' } },
-    { nome: 'Bruno Henrique', usuario: '06@func', tipo: 'funcionario', idade: 37, setor: 'Compras', cargo: 'Comprador', transportadora: { nome: 'SOU', link: 'https://soudiadema.com.br/o-cartao-sou-diadema/' } },
-    { nome: 'Juliana Alves', usuario: '07@func', tipo: 'funcionario', idade: 24, setor: 'Financeiro', cargo: 'Auxiliar financeiro', transportadora: { nome: 'SPTrans', link: 'https://www.sptrans.com.br/' } },
-    { nome: 'Ricardo Mendes', usuario: '08@func', tipo: 'funcionario', idade: 41, setor: 'Produção', cargo: 'Operador de produção', transportadora: { nome: 'VR', link: 'https://www.vr.com.br/' } },
-    { nome: 'Fernanda Lima', usuario: '09@func', tipo: 'funcionario', idade: 33, setor: 'Atendimento', cargo: 'Atendente', transportadora: { nome: 'VR', link: 'https://www.vr.com.br/' } },
-    { nome: 'Matheus Souza', usuario: '10@func', tipo: 'funcionario', idade: 27, setor: 'Estoque', cargo: 'Estoquista', transportadora: { nome: 'Ben', link: 'https://benvt.com.br/' } },
-    { nome: 'Patricia Gomes', usuario: '11@func', tipo: 'funcionario', idade: 35, setor: 'Jurídico', cargo: 'Analista jurídico', transportadora: { nome: 'Ben', link: 'https://benvt.com.br/' } },
-    { nome: 'Gustavo Martins', usuario: '12@func', tipo: 'funcionario', idade: 29, setor: 'TI', cargo: 'Desenvolvedor', transportadora: { nome: 'Ticket', link: 'https://www.ticket.com.br/' } },
-    { nome: 'Larissa Costa', usuario: '13@func', tipo: 'funcionario', idade: 32, setor: 'Qualidade', cargo: 'Analista de qualidade', transportadora: { nome: 'Ticket', link: 'https://www.ticket.com.br/' } },
-  ],
-  solicitacoes: [
-    { id: 1, funcionario: 'Sarah', tipo: 'Troca de férias', descricao: 'Solicitação de alteração do período de férias.', data: '12/05/2026', status: 'Esperando avaliação' },
-    { id: 2, funcionario: 'Maria Eduarda', tipo: 'Exame periódico', descricao: 'Agendamento de exame ocupacional.', data: '08/05/2026', status: 'Aprovado' },
-    { id: 3, funcionario: 'Pedro', tipo: 'Justificativa de falta', descricao: 'Envio de justificativa para ausência.', data: '03/05/2026', status: 'Negado' },
-    { id: 4, funcionario: 'Lucas Ferreira', tipo: 'Convênio Santa Helena', descricao: 'Inclusão de dependente com documentos anexados. Cópias PDF e TXT geradas.', data: '13/05/2026', status: 'Esperando avaliação' },
-  ],
-  ferias: [
-    { id: 1, nome: 'Sarah', setor: 'Produção', cargo: 'Operadora de produção', periodo: '01/05/2026 a 30/05/2026', retorno: '31/05/2026', status: 'Prestes a voltar', cor: 'green' },
-    { id: 2, nome: 'Maria Eduarda', setor: 'Vendas', cargo: 'Atendente comercial', periodo: '10/05/2026 a 24/05/2026', retorno: '25/05/2026', status: 'Na metade das férias', cor: 'yellow' },
-    { id: 3, nome: 'Pedro', setor: 'Logística', cargo: 'Auxiliar de logística', periodo: '13/05/2026 a 27/05/2026', retorno: '28/05/2026', status: 'Acabou de entrar de férias', cor: 'red' },
-  ],
-  holeritesAdmin: [
-    { id: 1, nome: 'Sarah', setor: 'Produção', cargo: 'Operadora de produção', holerites: baseHolerites(0) },
-    { id: 2, nome: 'Maria Eduarda', setor: 'Vendas', cargo: 'Atendente comercial', holerites: baseHolerites(10) },
-    { id: 3, nome: 'Pedro', setor: 'Logística', cargo: 'Auxiliar de logística', holerites: baseHolerites(20) },
-    { id: 4, nome: 'Lucas Ferreira', setor: 'TI', cargo: 'Analista de suporte', holerites: baseHolerites(30) },
-  ],
-  treinamentos: [
-    { id: 1, titulo: 'Segurança no trabalho', duracao: '15 min', link: 'video-seguranca.mp4' },
-    { id: 2, titulo: 'Boas práticas de fabricação', duracao: '30 min', link: 'video-boas-praticas.mp4' },
-    { id: 3, titulo: 'Cultura Lipson', duracao: '10 min', link: 'video-cultura.mp4' },
-  ],
-  conclusoesTreinamento: [
-    { id: 1, funcionario: 'Sarah', treinamento: 'Integração de novos funcionários', dataConclusao: '12/05/2026', progresso: '100%' },
-    { id: 2, funcionario: 'Pedro', treinamento: 'NR-6 — EPIs', dataConclusao: '11/05/2026', progresso: '100%' },
-  ],
-};
-
-function baseHolerites(offset = 0) {
-  return [
-    { id: 1 + offset, mes: 'Abril', competencia: '04/2026', valorLiquido: 'R$ 2.847,35', dataDisponivel: '05/05/2026', status: 'Esperando assinatura', protocoloDocusign: 'DOC-ABR-2026-10234' },
-    { id: 2 + offset, mes: 'Março', competencia: '03/2026', valorLiquido: 'R$ 2.791,80', dataDisponivel: '05/04/2026', status: 'Assinado', protocoloDocusign: 'DOC-MAR-2026-10234', dataAssinatura: '06/04/2026' },
-    { id: 3 + offset, mes: 'Fevereiro', competencia: '02/2026', valorLiquido: 'R$ 2.812,40', dataDisponivel: '05/03/2026', status: 'Assinado', protocoloDocusign: 'DOC-FEV-2026-10234', dataAssinatura: '06/03/2026' },
-  ];
+function deepClone(value) {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+  return JSON.parse(JSON.stringify(value));
 }
 
-let state = loadState();
+function getInitialDatabase() {
+  return deepClone(window.RH_DATABASE || {});
+}
 
-function loadState() {
+let state = loadLocalState();
+
+function loadLocalState() {
+  const initial = getInitialDatabase();
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (!saved) return structuredClone(initialState);
-    return { ...structuredClone(initialState), ...saved };
+    if (!saved) return initial;
+    return { ...initial, ...saved };
   } catch {
-    return structuredClone(initialState);
+    return initial;
   }
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+async function apiFetch(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Erro na API');
+  return data;
+}
+
+async function hydrateStateFromApi() {
+  if (!auth?.token) return false;
+  try {
+    const remoteState = await apiFetch('/state');
+    if (remoteState && Object.keys(remoteState).length) {
+      state = { ...getInitialDatabase(), ...remoteState };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+    apiOnline = true;
+    return true;
+  } catch (error) {
+    apiOnline = false;
+    return false;
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (auth?.token && apiOnline) {
+    apiFetch('/state', { method: 'PUT', body: JSON.stringify(state) }).catch(() => { apiOnline = false; });
+  }
+}
 const $ = (selector) => document.querySelector(selector);
 const app = $('#app');
 
@@ -751,17 +711,204 @@ function render() {
   if (state.page === 'perfil') renderPerfil();
 }
 
-function init() {
+function showLogin(message = '') {
+  $('#loginScreen').classList.remove('hidden');
+  $('#appShell').classList.add('hidden');
+  $('#apiUrlInput').value = API_URL;
+  if (message) $('#loginMessage').textContent = message;
+}
+
+function showApp() {
+  $('#loginScreen').classList.add('hidden');
+  $('#appShell').classList.remove('hidden');
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  const usuario = $('#loginUsuario').value.trim();
+  const senha = $('#loginSenha').value.trim();
+  API_URL = ($('#apiUrlInput').value || API_URL).trim().replace(/\/$/, '');
+  localStorage.setItem(API_KEY, API_URL);
+
+  try {
+    const data = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, senha }),
+    }).then(async (res) => {
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message || 'Login inválido');
+      return json;
+    });
+
+    auth = data;
+    localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+    await hydrateStateFromApi();
+    showApp();
+    bindAppEvents();
+    render();
+  } catch (error) {
+    const user = admins().find((item) => item.usuario === usuario);
+    if (user && senha === '1234') {
+      auth = { token: null, user, local: true };
+      localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+      apiOnline = false;
+      showApp();
+      bindAppEvents();
+      render();
+      alert('API não encontrada. Entrando em modo local para apresentação. Para compartilhar com mobile, rode o backend MongoDB.');
+      return;
+    }
+    $('#loginMessage').textContent = error.message || 'Não foi possível entrar.';
+  }
+}
+
+function bindAppEvents() {
   document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => { $('#sidebar').classList.remove('open'); setPage(btn.dataset.page); });
   $('#mobileMenu').onclick = () => $('#sidebar').classList.toggle('open');
   $('#profileBtn').onclick = () => $('#profileDropdown').classList.toggle('hidden');
   $('#profileDropdown').querySelector('[data-page="perfil"]').onclick = () => { $('#profileDropdown').classList.add('hidden'); setPage('perfil'); };
-  $('#logoutBtn').onclick = () => alert('Saída simulada para apresentação.');
+  $('#logoutBtn').onclick = () => { localStorage.removeItem(AUTH_KEY); auth = null; showLogin('Sessão encerrada.'); };
   $('#modalClose').onclick = closeModal;
   $('#modalBackdrop').onclick = (e) => { if (e.target.id === 'modalBackdrop') closeModal(); };
   $('#fontPlus').onclick = () => { state.fontScale = Math.min(1.25, +(state.fontScale + .08).toFixed(2)); saveState(); render(); };
   $('#fontMinus').onclick = () => { state.fontScale = Math.max(.9, +(state.fontScale - .08).toFixed(2)); saveState(); render(); };
+}
+
+async function init() {
+  $('#loginForm').onsubmit = handleLogin;
+  if (!auth) {
+    showLogin();
+    return;
+  }
+  await hydrateStateFromApi();
+  showApp();
+  bindAppEvents();
   render();
 }
 
 init();
+
+/* =========================================================
+   Ajustes finais: funcionalidades do app mobile no admin web
+   ========================================================= */
+function renderBenefitDetail(id) {
+  const titleMap = { valeTransporte:'Vale transporte', convenio:'Convênio Santa Helena', cestaBasica:'Cesta básica', auxilioCreche:'Auxílio creche', farmacia:'Farma Gold' };
+  const terms = benefitTerms(id);
+  const pedidos = state.solicitacoes.filter(s => terms.some(t => `${s.tipo} ${s.descricao}`.toLowerCase().includes(t)));
+  app.innerHTML = `
+    <button class="outline-btn" id="backBenefits">Voltar</button>
+    <div class="page-heading"><h2>${titleMap[id]}</h2><p>Controle administrativo, documentos e solicitações recebidas.</p></div>
+    ${benefitInfo(id)}
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><div><h3 class="card-title">Solicitações recebidas</h3><p class="card-sub">Aprovação ou recusa pelo RH.</p></div><button class="outline-btn" id="openAllBenefitRequests">Abrir lista</button></div>
+      <div class="list" id="requestsList">${pedidos.map(s => requestItem(s, true)).join('') || '<p>Nenhuma solicitação encontrada.</p>'}</div>
+    </div>
+  `;
+  $('#backBenefits').onclick = () => { state.selectedBenefit = null; renderBeneficios(); };
+  $('#openAllBenefitRequests').onclick = () => showSolicitacoesModal(null, pedidos);
+  bindRequestActions();
+  if (id === 'valeTransporte') bindTransportadoraButtons();
+  if (id === 'convenio') bindConvenioButtons();
+  if (id === 'cestaBasica') bindCestaButtons();
+}
+
+function benefitInfo(id) {
+  if (id === 'valeTransporte') {
+    const trans = [...new Set(state.usuarios.map(u => u.transportadora?.nome).filter(Boolean))];
+    return `<div class="card"><h3 class="card-title">Administração do VT</h3><p class="card-sub">Créditos, funcionários vinculados e link da transportadora.</p><div class="filter-pills">${trans.map(t => `<button class="pill transport-pill" data-transport="${t}">${t}</button>`).join('')}</div><div id="transportPanel"></div></div>`;
+  }
+  if (id === 'convenio') {
+    const cfg = state.convenioConfig || {};
+    return `<div class="benefit-pro-grid">
+      <section class="card benefit-hero-card">
+        <span class="eyebrow">Plano empresarial</span>
+        <h3>${cfg.nome || 'Santa Helena Saúde'}</h3>
+        <p>${cfg.planoPadrao || 'Empresarial com coparticipação'}</p>
+        <div class="actions"><a class="primary-btn" href="${cfg.link || '#'}" target="_blank">Abrir portal Santa Helena</a><button class="outline-btn" id="openDependentes">Ver dependentes</button></div>
+      </section>
+      <section class="card">
+        <h3 class="card-title">Documentos exigidos</h3>
+        <div class="check-list">${(cfg.documentosDependente || []).map(d => `<span>${d}</span>`).join('')}</div>
+      </section>
+      <section class="card wide">
+        <h3 class="card-title">Dependentes cadastrados / em análise</h3>
+        <div class="list">${(state.dependentesConvenio || []).map(d => `<button class="list-item" data-dependente="${d.id}"><div><strong>${d.nome}</strong><span>${d.funcionario} • ${d.parentesco}<br>CPF: ${d.cpf} • Nasc.: ${d.nascimento}</span></div><span class="badge ${d.status === 'Ativo' ? 'green' : 'yellow'}">${d.status}</span></button>`).join('') || '<p>Nenhum dependente cadastrado.</p>'}</div>
+      </section>
+    </div>`;
+  }
+  if (id === 'farmacia') {
+    const cfg = state.farmaciaConfig || {};
+    return `<div class="benefit-pro-grid">
+      <section class="card benefit-hero-card"><span class="eyebrow">Benefício farmácia</span><h3>${cfg.nome || 'Farma Gold'}</h3><p>Cálculo por porcentagem do salário ou auxílio fixo definido pela empresa.</p><div class="actions"><a class="primary-btn" href="https://www.farmagold.com.br/" target="_blank">Abrir Farma Gold</a></div></section>
+      <section class="card"><h3 class="card-title">Regras de valor</h3><div class="mini-metrics"><button onclick="showFuncionariosModal()"><strong>${cfg.porcentagemSalario || 3}%</strong><span>do salário</span></button><button><strong>${(cfg.auxilioFixo || 120).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</strong><span>auxílio fixo</span></button></div></section>
+      <section class="card wide"><h3 class="card-title">Rede aceita</h3><div class="check-list">${(cfg.redeAceita || []).map(item => `<span>${item}</span>`).join('')}</div></section>
+    </div>`;
+  }
+  if (id === 'cestaBasica') {
+    return `<div class="benefit-pro-grid">
+      <section class="card benefit-hero-card"><span class="eyebrow">Formulários digitais</span><h3>Cesta básica</h3><p>Pedidos de entrega ou retirada com assinatura digital. Uma cópia fica com o funcionário e outra com o RH.</p><div class="actions"><button class="primary-btn" onclick="window.print()">Gerar relatório</button><button class="outline-btn" id="openCestaForms">Ver formulários</button></div></section>
+      <section class="card wide"><h3 class="card-title">Formulários enviados</h3><div class="list">${(state.cestaFormularios || []).map(f => `<div class="list-item"><div><strong>${f.funcionario}</strong><span>${f.tipo} • ${f.data}<br>Protocolo: ${f.protocolo}</span></div>${badge(f.status)}</div>`).join('') || '<p>Nenhum formulário recebido.</p>'}</div></section>
+    </div>`;
+  }
+  return `<div class="benefit-pro-grid"><section class="card benefit-hero-card"><span class="eyebrow">Documentos e dependentes</span><h3>Auxílio creche</h3><p>Solicitações com certidão de nascimento, comprovante de creche e documento do responsável.</p><div class="mini-metrics"><button><strong>R$ 350,00</strong><span>valor fixo previsto</span></button><button><strong>0%</strong><span>desconto em salário</span></button></div></section></div>`;
+}
+
+function bindConvenioButtons() {
+  const btn = $('#openDependentes');
+  if (btn) btn.onclick = () => openModal('Dependentes do convênio', 'Santa Helena Saúde', `<div class="list">${(state.dependentesConvenio || []).map(d => `<div class="list-item"><div><strong>${d.nome}</strong><span>${d.funcionario} • ${d.parentesco}<br>CPF: ${d.cpf} • Nascimento: ${d.nascimento}<br>Documentos: ${d.documentos.join(', ')}</span></div><span class="badge ${d.status === 'Ativo' ? 'green' : 'yellow'}">${d.status}</span></div>`).join('')}</div>`);
+  document.querySelectorAll('[data-dependente]').forEach(btn => btn.onclick = () => {
+    const dep = (state.dependentesConvenio || []).find(d => String(d.id) === btn.dataset.dependente);
+    openModal(`Dependente: ${dep.nome}`, `${dep.funcionario} • ${dep.status}`, `<div class="card"><p><strong>Parentesco:</strong> ${dep.parentesco}</p><p><strong>CPF:</strong> ${dep.cpf}</p><p><strong>Nascimento:</strong> ${dep.nascimento}</p><p><strong>Documentos:</strong> ${dep.documentos.join(', ')}</p></div>`);
+  });
+}
+function bindCestaButtons() {
+  const btn = $('#openCestaForms');
+  if (btn) btn.onclick = () => openModal('Formulários de cesta básica', 'Entrega, retirada e assinaturas', `<div class="list">${(state.cestaFormularios || []).map(f => `<div class="list-item"><div><strong>${f.funcionario}</strong><span>${f.tipo} • ${f.data}<br>Protocolo: ${f.protocolo}</span></div>${badge(f.status)}</div>`).join('')}</div>`);
+}
+
+function renderPessoalDetail(id) {
+  if (id === 'ferias') return renderFerias();
+  if (id === 'treinamentos') return openTreinamentos(true);
+  if (id === 'faltas') return renderFaltasAdmin();
+  if (id === 'exames') return renderExamesAdmin();
+  const title = { solicitacoes:'Solicitações gerais' }[id] || 'Detalhe';
+  const pedidos = state.solicitacoes;
+  app.innerHTML = `<button class="outline-btn" id="backPessoal">Voltar</button><div class="page-heading"><h2>${title}</h2><p>Solicitações recebidas dos funcionários.</p></div><div class="card"><div class="list">${pedidos.map(s => requestItem(s, true)).join('') || '<p>Nenhuma solicitação encontrada.</p>'}</div></div>`;
+  $('#backPessoal').onclick = () => { state.selectedPessoal = null; renderPessoal(); };
+  bindRequestActions();
+}
+
+function renderFaltasAdmin() {
+  const dados = state.faltasAdmin || [];
+  const naoJust = dados.filter(f => f.status === 'Não justificada').length;
+  const analise = dados.filter(f => f.status === 'Em análise').length;
+  app.innerHTML = `<button class="outline-btn" id="backPessoal">Voltar</button>
+    <div class="page-heading"><h2>Faltas e atestados</h2><p>Justificativas, documentos enviados e apontamentos dos funcionários.</p></div>
+    <div class="dashboard-kpi-row"><button class="metric-card" id="faltasTodos"><strong>${dados.length}</strong><small>Registros</small><em>Total no período</em></button><button class="metric-card metric-red" id="faltasNao"><strong>${naoJust}</strong><small>Não justificadas</small><em>Precisam de ação</em></button><button class="metric-card metric-yellow" id="faltasAnalise"><strong>${analise}</strong><small>Em análise</small><em>Documentos recebidos</em></button></div>
+    <section class="card"><div class="card-header"><h3 class="card-title">Registros do período</h3><input class="table-search" id="faltasSearch" placeholder="Pesquisar funcionário, setor ou status"></div><div class="list" id="faltasList">${faltasRows(dados)}</div></section>`;
+  $('#backPessoal').onclick = () => { state.selectedPessoal = null; renderPessoal(); };
+  $('#faltasTodos').onclick = () => showFaltasModal(dados, 'Todos os registros');
+  $('#faltasNao').onclick = () => showFaltasModal(dados.filter(f => f.status === 'Não justificada'), 'Faltas não justificadas');
+  $('#faltasAnalise').onclick = () => showFaltasModal(dados.filter(f => f.status === 'Em análise'), 'Faltas em análise');
+  $('#faltasSearch').oninput = e => { const q = e.target.value.toLowerCase(); $('#faltasList').innerHTML = faltasRows(dados.filter(f => `${f.funcionario} ${f.setor} ${f.tipo} ${f.status}`.toLowerCase().includes(q))); };
+}
+function faltasRows(dados) { return dados.map(f => `<button class="list-item" data-falta="${f.id}"><div><strong>${f.funcionario}</strong><span>${f.setor} • ${f.tipo} • ${f.data}<br>${f.descricao}${f.documento ? `<br>Documento: ${f.documento}` : ''}</span></div><span class="badge ${f.status === 'Justificada' ? 'green' : f.status === 'Não justificada' ? 'red' : 'yellow'}">${f.status}</span></button>`).join('') || '<p>Nenhum registro encontrado.</p>'; }
+function showFaltasModal(list, title) { openModal(title, `${list.length} registro(s)`, `<div class="list">${faltasRows(list)}</div>`); }
+
+function renderExamesAdmin() {
+  const dados = state.examesAdmin || [];
+  const pendentes = dados.filter(e => ['Pendente','Atrasado'].includes(e.status)).length;
+  const agendados = dados.filter(e => e.status === 'Agendado').length;
+  app.innerHTML = `<button class="outline-btn" id="backPessoal">Voltar</button>
+    <div class="page-heading"><h2>Exames periódicos</h2><p>Comprovantes, vencimentos e pendências ocupacionais.</p></div>
+    <div class="dashboard-kpi-row"><button class="metric-card" id="examesTodos"><strong>${dados.length}</strong><small>Exames</small><em>Total cadastrado</em></button><button class="metric-card metric-red" id="examesPendentes"><strong>${pendentes}</strong><small>Pendentes/atrasados</small><em>Precisam de ação</em></button><button class="metric-card metric-blue" id="examesAgenda"><strong>${agendados}</strong><small>Agendados</small><em>Próximas datas</em></button></div>
+    <section class="card"><div class="card-header"><h3 class="card-title">Controle ocupacional</h3><input class="table-search" id="examesSearch" placeholder="Pesquisar funcionário, exame ou status"></div><div class="list" id="examesList">${examesRows(dados)}</div></section>`;
+  $('#backPessoal').onclick = () => { state.selectedPessoal = null; renderPessoal(); };
+  $('#examesTodos').onclick = () => showExamesModal(dados, 'Todos os exames');
+  $('#examesPendentes').onclick = () => showExamesModal(dados.filter(e => ['Pendente','Atrasado'].includes(e.status)), 'Exames pendentes/atrasados');
+  $('#examesAgenda').onclick = () => showExamesModal(dados.filter(e => e.status === 'Agendado'), 'Exames agendados');
+  $('#examesSearch').oninput = e => { const q = e.target.value.toLowerCase(); $('#examesList').innerHTML = examesRows(dados.filter(x => `${x.funcionario} ${x.setor} ${x.titulo} ${x.status}`.toLowerCase().includes(q))); };
+}
+function examesRows(dados) { return dados.map(e => `<button class="list-item"><div><strong>${e.funcionario}</strong><span>${e.setor} • ${e.titulo} • ${e.data}<br>${e.local} • Prazo: ${e.prazo}${e.comprovante ? `<br>Comprovante: ${e.comprovante}` : ''}</span></div><span class="badge ${e.status === 'Concluído' ? 'green' : e.status === 'Atrasado' ? 'red' : e.status === 'Agendado' ? 'blue' : 'yellow'}">${e.status}</span></button>`).join('') || '<p>Nenhum exame encontrado.</p>'; }
+function showExamesModal(list, title) { openModal(title, `${list.length} exame(s)`, `<div class="list">${examesRows(list)}</div>`); }

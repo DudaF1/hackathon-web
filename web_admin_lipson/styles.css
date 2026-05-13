@@ -530,3 +530,20 @@ button { cursor: pointer; }
   .profile-info-grid-pro { grid-template-columns: 1fr; }
   .profile-avatar-pro { width: 92px; height: 92px; border-radius: 24px; }
 }
+
+/* Complementos das funcionalidades finais */
+.benefit-pro-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:16px}.benefit-pro-grid .wide{grid-column:1/-1}.benefit-hero-card{background:linear-gradient(135deg,#fff,#fbf8f5);border-left:5px solid var(--brown)}.check-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.check-list span{background:#fbf8f5;border:1px solid var(--border);border-radius:999px;padding:8px 12px;font-weight:800;color:var(--brown)}.mini-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}.mini-metrics button,.mini-metrics div{border:1px solid var(--border);border-radius:16px;background:#fff;padding:14px;text-align:left}.mini-metrics strong{display:block;color:var(--brown);font-size:1.35rem}.mini-metrics span{display:block;color:var(--muted);font-size:.82rem;margin-top:4px}.table-search{border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:260px}.badge.blue{background:#dbeafe;color:#1d4ed8}.metric-card{cursor:pointer}.list-item{cursor:pointer}@media(max-width:760px){.benefit-pro-grid{grid-template-columns:1fr}.table-search{min-width:100%;width:100%}.mini-metrics{grid-template-columns:1fr}}
+
+/* Login + MongoDB */
+.hidden { display: none !important; }
+.login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(circle at top left, #f3e7dd, transparent 36%), linear-gradient(135deg, #3f2618, #6b4226); }
+.login-card { width: min(440px, 100%); background: rgba(255,255,255,.96); border: 1px solid rgba(255,255,255,.45); border-radius: 28px; padding: 30px; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+.login-logo { margin-bottom: 14px; }
+.login-card h1 { color: var(--brown); font-size: 2rem; margin: 0 0 8px; }
+.login-card p { color: var(--muted); line-height: 1.5; }
+.login-form { display: grid; gap: 10px; margin-top: 18px; }
+.login-form label { font-size: .78rem; font-weight: 900; color: var(--brown); text-transform: uppercase; letter-spacing: .04em; }
+.login-form input { border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; outline: 0; font: inherit; background: #fff; color: var(--text); }
+.login-form input:focus { border-color: var(--brown); box-shadow: 0 0 0 4px rgba(107,66,38,.10); }
+.full { width: 100%; justify-content: center; }
+#loginMessage { color: var(--muted); line-height: 1.45; margin-top: 4px; }

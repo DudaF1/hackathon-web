@@ -7,7 +7,26 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="brand-logo login-logo">RH</div>
+      <p class="eyebrow">RH Cosmetics</p>
+      <h1>Login administrativo</h1>
+      <p>Entre com uma conta de administrador para acessar o painel web compartilhado com o mobile.</p>
+      <form id="loginForm" class="login-form">
+        <label>Usuário</label>
+        <input id="loginUsuario" autocomplete="username" placeholder="Ex: 01@adm" value="01@adm" />
+        <label>Senha</label>
+        <input id="loginSenha" type="password" autocomplete="current-password" placeholder="Senha" value="1234" />
+        <label>URL da API</label>
+        <input id="apiUrlInput" placeholder="http://localhost:3001/api" />
+        <button class="primary-btn full" type="submit">Entrar</button>
+        <small id="loginMessage">Use 01@adm / 1234 depois de rodar o seed do MongoDB.</small>
+      </form>
+    </div>
+  </section>
+
+  <div class="app-shell hidden" id="appShell">
     <aside class="sidebar" id="sidebar">
       <div class="brand-block">
         <div class="brand-logo">RH</div>
@@ -66,6 +85,7 @@
     </div>
   </div>
 
+  <script src="database.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
