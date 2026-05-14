@@ -207,124 +207,107 @@ function openVotingEditor() {
 }
 
 function renderDashboard() {
-  setHeader('Dashboard', 'Indicadores executivos do RH');
+  setHeader('Dashboard Executivo', 'Resumo de conformidade, demandas críticas e indicadores do RH');
   const d = dashboardData();
   const setores = sectorData();
   const totalSolicitacoes = Math.max(state.solicitacoes.length, 1);
   const aprovPct = Math.round(d.aprovadas / totalSolicitacoes * 100);
   const pendPct = Math.round(d.pendentes / totalSolicitacoes * 100);
   const negPct = Math.round(d.negadas / totalSolicitacoes * 100);
-  const tendencia = [74, 78, 81, 84, 87, d.compliance];
   const totalDemandas = d.pendentes + d.holeritesPendentes;
-  const alertLevel = totalDemandas === 0 ? 'Operação estável' : totalDemandas <= 4 ? 'Atenção moderada' : 'Prioridade crítica';
+  const now = new Date();
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Atual'];
+  const tendencia = [72, 76, 80, 84, 88, d.compliance];
+  const alertLevel = totalDemandas === 0 ? 'Sem pendências críticas' : totalDemandas <= 4 ? 'Atenção moderada' : 'Ação imediata requerida';
 
   app.innerHTML = `
-    <section class="executive-hero">
-      <div class="executive-hero-content">
-        <span class="eyebrow">Painel executivo · RH Cosmetics</span>
-        <h2>Dashboard Administrativo</h2>
-        <p>Visão geral de funcionários, benefícios, holerites, solicitações e alertas operacionais do RH.</p>
-        <div class="hero-actions-row">
-          <button class="hero-action primary" id="toAnalytics">Abrir analytics</button>
-          <button class="hero-action" onclick="window.print()">Gerar relatório PDF</button>
-          <button class="hero-action" id="exportDashCsv">Exportar CSV</button>
+    <section class="dash-topbar-pro">
+      <div>
+        <span class="dash-kicker">RH COSMETICS · PAINEL ADMINISTRATIVO</span>
+        <h2>Dashboard <span>Executivo</span></h2>
+        <p>Resumo em tempo real dos fluxos de funcionários, benefícios, holerites, férias e solicitações internas.</p>
+      </div>
+      <div class="dash-actions-pro">
+        <button class="dash-btn secondary" id="exportDashCsv">Exportar CSV</button>
+        <button class="dash-btn secondary" onclick="window.print()">Gerar relatório</button>
+        <button class="dash-btn primary" id="toAnalytics">Abrir analytics</button>
+      </div>
+    </section>
+
+    <section class="dash-live-panel">
+      <div class="dash-live-pulse"></div>
+      <div>
+        <strong>${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong>
+        <span>${now.toLocaleDateString('pt-BR')} · atualizado agora</span>
+      </div>
+      <div class="dash-live-divider"></div>
+      <div>
+        <strong>${alertLevel}</strong>
+        <span>${totalDemandas} demandas abertas monitoradas</span>
+      </div>
+    </section>
+
+    <section class="dash-kpis-pro">
+      ${dashKpiCard('Conformidade global', `${d.compliance}%`, `${d.aprovadas} solicitações aprovadas · ${d.holeritesAssinados} holerites assinados`, 'ok', 'openCompliance')}
+      ${dashKpiCard('Alertas críticos', `${d.holeritesPendentes}`, 'Holerites esperando assinatura', d.holeritesPendentes ? 'danger' : 'ok', 'kpiHol')}
+      ${dashKpiCard('Demandas abertas', `${totalDemandas}`, `${d.pendentes} solicitações · ${d.holeritesPendentes} holerites`, totalDemandas ? 'warn' : 'ok', 'openDemandas')}
+      ${dashKpiCard('Funcionários', `${d.totalFuncionarios}`, `Cobertura em ${setores.length} setores ativos`, 'info', 'openFuncionarios')}
+    </section>
+
+    <section class="dash-bento-pro">
+      <article class="dash-card-pro col-7">
+        <div class="dash-card-head">
+          <div><h3>Conformidade por setor</h3><p>Funcionários, pendências e progresso operacional.</p></div>
+          <span class="dash-chip">${setores.length} setores</span>
         </div>
-      </div>
-
-      <div class="executive-score-card">
-        <span class="score-label">Conformidade global</span>
-        <strong>${d.compliance}%</strong>
-        <div class="score-track"><div style="width:${d.compliance}%"></div></div>
-        <small>${alertLevel}</small>
-      </div>
-    </section>
-
-    <section class="dashboard-kpi-row">
-      <button class="metric-card metric-green" id="openCompliance">
-        <span class="metric-icon">✓</span>
-        <strong>${d.compliance}%</strong>
-        <small>Conformidade</small>
-        <em>${d.aprovadas} solicitações aprovadas</em>
-      </button>
-      <button class="metric-card metric-yellow" id="openDemandas">
-        <span class="metric-icon">!</span>
-        <strong>${totalDemandas}</strong>
-        <small>Demandas abertas</small>
-        <em>${d.pendentes} solicitações · ${d.holeritesPendentes} holerites</em>
-      </button>
-      <button class="metric-card metric-blue" id="openFuncionarios">
-        <span class="metric-icon">#</span>
-        <strong>${d.totalFuncionarios}</strong>
-        <small>Funcionários</small>
-        <em>${setores.length} setores ativos</em>
-      </button>
-      <button class="metric-card metric-red" id="kpiHol">
-        <span class="metric-icon">PDF</span>
-        <strong>${d.holeritesPendentes}</strong>
-        <small>Holerites pendentes</small>
-        <em>Aguardando assinatura</em>
-      </button>
-    </section>
-
-    <section class="dashboard-bento">
-      <article class="bento-card bento-large">
-        <div class="card-header tight">
-          <div>
-            <h3 class="card-title">Tendência de conformidade</h3>
-            <p class="card-sub">Histórico estimado dos últimos 6 meses</p>
+        <div class="sector-table-like">
+          <div class="sector-like-row sector-like-head">
+            <span>Setor</span><span>Funcionários</span><span>Pendências</span><span>Progresso</span><span>Status</span>
           </div>
-          <span class="badge green">+${Math.max(0, d.compliance - tendencia[0])} pts</span>
+          ${setores.map(s => `
+            <button class="sector-like-row" data-sector="${s.setor}">
+              <strong>${s.setor}</strong>
+              <span>${s.funcionarios}</span>
+              <span>${s.pendencias}</span>
+              <div class="sector-progress-pro"><em>${s.progresso}%</em><i><b style="width:${s.progresso}%;background:${statusColor(s.status)}"></b></i></div>
+              <span class="dash-status ${statusClass(s.status)}">${s.status}</span>
+            </button>
+          `).join('')}
         </div>
-        ${lineChart(tendencia, ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Atual'])}
       </article>
 
-      <article class="bento-card">
-        <div class="card-header tight">
-          <div>
-            <h3 class="card-title">Status das solicitações</h3>
-            <p class="card-sub">Distribuição por situação</p>
-          </div>
+      <article class="dash-card-pro col-5">
+        <div class="dash-card-head"><div><h3>Alertas & pendências</h3><p>Itens que precisam de ação do RH.</p></div></div>
+        <div class="alerts-list-pro">
+          ${dashAlert('danger', `${d.holeritesPendentes} holerites sem assinatura`, 'Documentos pendentes por funcionário.', 'alertHolerites')}
+          ${dashAlert('warn', `${d.pendentes} solicitações em aberto`, 'Pedidos aguardando avaliação.', 'alertDemandas')}
+          ${dashAlert('info', 'Controle de férias atualizado', 'Funcionários em férias e próximos retornos.', 'alertFerias')}
+          ${dashAlert('ok', `${d.totalFuncionarios} funcionários cadastrados`, 'Base administrativa carregada do database.js.', 'openFuncionariosMini')}
         </div>
-        ${donutMulti([
-          ['Aprovadas', aprovPct, '#16a34a'],
-          ['Em aberto', pendPct, '#f59e0b'],
-          ['Negadas', negPct, '#ef4444'],
+      </article>
+
+      <article class="dash-card-pro col-6">
+        <div class="dash-card-head"><div><h3>Tendência histórica de conformidade</h3><p>Últimos 6 meses</p></div><span class="dash-chip positive">+${Math.max(0, d.compliance - tendencia[0])} pts</span></div>
+        ${lineChartPro(tendencia, meses)}
+      </article>
+
+      <article class="dash-card-pro col-3">
+        <div class="dash-card-head"><div><h3>Mix de solicitações</h3><p>Status atual</p></div></div>
+        ${donutMultiPro([
+          ['Aprovadas', aprovPct, '#12544d'],
+          ['Em aberto', pendPct, '#c4956a'],
+          ['Negadas', negPct, '#a1213d'],
         ], `${aprovPct}%`, 'aprovadas')}
       </article>
 
-      <article class="bento-card">
-        <h3 class="card-title">Volume operacional</h3>
-        ${verticalChart([
-          ['Solicitações', state.solicitacoes.length, MARROM],
-          ['H. assinados', d.holeritesAssinados, '#16a34a'],
-          ['H. pendentes', d.holeritesPendentes, '#ef4444'],
-          ['Funcionários', d.totalFuncionarios, '#2563eb']
+      <article class="dash-card-pro col-3">
+        <div class="dash-card-head"><div><h3>Volume operacional</h3><p>Comparativo rápido</p></div></div>
+        ${miniBarsPro([
+          ['Solic.', state.solicitacoes.length, '#6b4226'],
+          ['H. ass.', d.holeritesAssinados, '#12544d'],
+          ['H. pend.', d.holeritesPendentes, '#a1213d'],
+          ['Func.', d.totalFuncionarios, '#315b7c'],
         ])}
-      </article>
-
-      <article class="bento-card bento-large">
-        <div class="card-header tight">
-          <div>
-            <h3 class="card-title">Conformidade por setor</h3>
-            <p class="card-sub">Clique em um setor para visualizar os funcionários</p>
-          </div>
-        </div>
-        <div class="sector-table-pro">
-          ${setores.map(s => `<button class="sector-pro-row" data-sector="${s.setor}">
-            <div><strong>${s.setor}</strong><span>${s.funcionarios} funcionários · ${s.pendencias} pendências</span></div>
-            <div class="sector-progress"><span>${s.progresso}%</span><div class="progress-bar"><div class="progress-fill" style="width:${s.progresso}%;background:${s.status === 'OK' ? '#16a34a' : s.status === 'Atenção' ? '#f59e0b' : '#ef4444'}"></div></div></div>
-            <span class="badge ${s.status === 'OK' ? 'green' : s.status === 'Atenção' ? 'yellow' : 'red'}">${s.status}</span>
-          </button>`).join('')}
-        </div>
-      </article>
-
-      <article class="bento-card">
-        <h3 class="card-title">Alertas e pendências</h3>
-        <div class="list">
-          <button class="alert-pro warning" id="alertDemandas"><strong>${d.pendentes} solicitações esperando avaliação</strong><span>Pedidos enviados pelos funcionários.</span></button>
-          <button class="alert-pro danger" id="alertHolerites"><strong>${d.holeritesPendentes} holerites sem assinatura</strong><span>Documentos pendentes.</span></button>
-          <button class="alert-pro info" id="openFuncionariosMini"><strong>${d.totalFuncionarios} funcionários cadastrados</strong><span>Toque para abrir a lista nominal.</span></button>
-        </div>
       </article>
     </section>
   `;
@@ -335,7 +318,54 @@ function renderDashboard() {
   ['openDemandas','alertDemandas'].forEach(id => $('#'+id).onclick = () => showDemandasModal());
   ['kpiHol','alertHolerites'].forEach(id => $('#'+id).onclick = () => showHoleritesModal('pendentes'));
   $('#openCompliance').onclick = () => showSolicitacoesModal('Aprovado');
+  $('#alertFerias').onclick = () => { state.page = 'pessoal'; state.selectedPessoal = 'ferias'; saveState(); render(); };
   document.querySelectorAll('[data-sector]').forEach(btn => btn.onclick = () => showFuncionariosModal(btn.dataset.sector));
+}
+
+function dashKpiCard(label, value, detail, tone, id) {
+  const icon = { ok: '✓', warn: '!', danger: '×', info: '#' }[tone] || '•';
+  return `<button class="dash-kpi-pro ${tone}" id="${id}"><i>${icon}</i><strong>${value}</strong><span>${label}</span><small>${detail}</small></button>`;
+}
+
+function dashAlert(tone, title, text, id) {
+  return `<button class="dash-alert-pro ${tone}" id="${id}"><i></i><strong>${title}</strong><span>${text}</span></button>`;
+}
+
+function statusColor(status) {
+  return status === 'OK' ? '#12544d' : status === 'Atenção' ? '#c4956a' : '#a1213d';
+}
+function statusClass(status) {
+  return status === 'OK' ? 'ok' : status === 'Atenção' ? 'warn' : 'danger';
+}
+
+function lineChartPro(values, labels) {
+  const width = 760, height = 260, p = 34;
+  const min = Math.min(...values, 60) - 4;
+  const max = Math.max(...values, 100) + 2;
+  const pts = values.map((v, i) => {
+    const x = p + i * ((width - p * 2) / Math.max(values.length - 1, 1));
+    const y = height - p - ((v - min) / Math.max(max - min, 1)) * (height - p * 2);
+    return { x, y, v, label: labels[i] };
+  });
+  const path = pts.map((pt, i) => `${i ? 'L' : 'M'} ${pt.x} ${pt.y}`).join(' ');
+  const area = `${path} L ${pts.at(-1).x} ${height - p} L ${pts[0].x} ${height - p} Z`;
+  return `<div class="line-pro-wrap"><svg viewBox="0 0 ${width} ${height}">
+    <defs><linearGradient id="dashArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6b4226" stop-opacity=".22"/><stop offset="1" stop-color="#6b4226" stop-opacity=".02"/></linearGradient></defs>
+    ${[0,1,2,3].map(i => `<line x1="${p}" x2="${width-p}" y1="${p+i*52}" y2="${p+i*52}" class="grid-line-pro"/>`).join('')}
+    <path d="${area}" fill="url(#dashArea)"></path><path d="${path}" class="line-pro"></path>
+    ${pts.map(pt => `<g><circle cx="${pt.x}" cy="${pt.y}" r="6" class="dot-pro"/><text x="${pt.x}" y="${pt.y-14}" text-anchor="middle" class="value-pro">${pt.v}%</text><text x="${pt.x}" y="${height-8}" text-anchor="middle" class="label-pro">${pt.label}</text></g>`).join('')}
+  </svg></div>`;
+}
+
+function donutMultiPro(items, center, subtitle) {
+  let current = 0;
+  const parts = items.map(([_, value, color]) => { const start = current; current += value; return `${color} ${start}% ${current}%`; }).join(', ');
+  return `<div class="donut-pro2-wrap"><div class="donut-pro2" style="background:conic-gradient(${parts || '#eadbd2 0 100%'})"><div><strong>${center}</strong><span>${subtitle}</span></div></div><div class="donut-pro2-legend">${items.map(([label,value,color]) => `<span><i style="background:${color}"></i>${label}<b>${value}%</b></span>`).join('')}</div></div>`;
+}
+
+function miniBarsPro(items) {
+  const max = Math.max(...items.map(i => i[1]), 1);
+  return `<div class="mini-bars-pro">${items.map(([label, value, color]) => `<div class="mini-bar-pro"><strong>${value}</strong><i><b style="height:${Math.max(8, value/max*150)}px;background:${color}"></b></i><span>${label}</span></div>`).join('')}</div>`;
 }
 
 function sectorData() {
@@ -401,35 +431,89 @@ function donutMulti(items, center, subtitle) {
 }
 
 function renderAnalytics() {
-  setHeader('Analytics', 'Filtros, relatórios e indicadores por setor');
+  setHeader('Analytics & Relatórios', 'Indicadores avançados por setor, benefício e status operacional');
   const setores = ['Todos', ...new Set(funcionarios().map(f => f.setor))];
   const setor = state.selectedSector || 'Todos';
   const fs = setor === 'Todos' ? funcionarios() : funcionarios().filter(f => f.setor === setor);
   const hol = setor === 'Todos' ? state.holeritesAdmin : state.holeritesAdmin.filter(h => h.setor === setor);
   const solicit = setor === 'Todos' ? state.solicitacoes : state.solicitacoes.filter(s => fs.some(f => f.nome === s.funcionario));
   const vtCount = countBy(fs, f => f.transportadora.nome);
+  const totalHol = hol.reduce((t, f) => t + f.holerites.length, 0);
+  const aprovadas = solicit.filter(s => s.status === 'Aprovado').length;
+  const pendentes = solicit.filter(s => s.status === 'Esperando avaliação').length;
+  const negadas = solicit.filter(s => s.status === 'Negado').length;
+  const totalSolic = Math.max(solicit.length, 1);
+
   app.innerHTML = `
-    <div class="page-heading"><h2>Analytics & Relatórios</h2><p>Indicadores avançados por setor e transportadora.</p></div>
-    <div class="filter-pills">${setores.map(s => `<button class="pill ${s === setor ? 'active' : ''}" data-filter="${s}">${s}</button>`).join('')}</div>
-    <div class="grid four">
-      <button class="card kpi-card clickable" id="anFunc"><div class="kpi-value">${fs.length}</div><div><div class="kpi-label">Funcionários no filtro</div></div></button>
-      <button class="card kpi-card clickable" id="anSolic"><div class="kpi-value">${solicit.length}</div><div><div class="kpi-label">Solicitações</div></div></button>
-      <button class="card kpi-card clickable" id="anHol"><div class="kpi-value">${hol.reduce((t,f)=>t+f.holerites.length,0)}</div><div><div class="kpi-label">Holerites</div></div></button>
-      <button class="card kpi-card clickable" id="anExport"><div class="kpi-value">CSV</div><div><div class="kpi-label">Exportar dados</div></div></button>
-    </div>
-    <div class="grid two" style="margin-top:16px">
-      <section class="card chart-card"><h3 class="card-title">Tendência histórica de RH</h3>${verticalChart([['Jan',72,MARROM],['Fev',76,MARROM],['Mar',80,MARROM],['Abr',84,MARROM],['Mai',88,MARROM],['Atual',dashboardData().compliance,MARROM]])}</section>
-      <section class="card chart-card"><h3 class="card-title">Funcionários por transportadora</h3><div class="bars">${Object.entries(vtCount).map(([k,v]) => `<div class="bar-row"><strong>${k}</strong><div class="bar-track"><div class="bar-fill" style="width:${v/Math.max(...Object.values(vtCount),1)*100}%"></div></div><span>${v}</span></div>`).join('')}</div></section>
-      <section class="card"><h3 class="card-title">Funcionários</h3><div class="list">${fs.map(f => `<button class="list-item"><div><strong>${f.nome}</strong><span>${f.setor} • ${f.cargo || 'Funcionário'} • ${f.transportadora.nome}</span></div><span class="badge brown">${f.usuario}</span></button>`).join('')}</div></section>
-      <section class="card"><h3 class="card-title">Solicitações do filtro</h3><div class="list">${solicit.map(s => requestItem(s)).join('') || '<p>Nenhuma solicitação no filtro.</p>'}</div></section>
-    </div>
+    <section class="analytics-header-pro">
+      <div>
+        <span class="dash-kicker">RELATÓRIOS AVANÇADOS</span>
+        <h2>Analytics <span>&</span> Relatórios</h2>
+        <p>Filtre por setor para acompanhar funcionários, benefícios, transportadoras, solicitações e holerites.</p>
+      </div>
+      <div class="dash-actions-pro">
+        <button class="dash-btn secondary" id="clearAnalytics">Limpar filtro</button>
+        <button class="dash-btn primary" id="anExport">Exportar CSV</button>
+      </div>
+    </section>
+
+    <div class="filter-bar-pro">${setores.map(s => `<button class="filter-pill-pro ${s === setor ? 'active' : ''}" data-filter="${s}">${s}</button>`).join('')}</div>
+
+    <section class="dash-kpis-pro analytics-kpis-pro">
+      ${dashKpiCard('Funcionários no filtro', fs.length, setor === 'Todos' ? 'Todos os setores' : setor, 'info', 'anFunc')}
+      ${dashKpiCard('Solicitações', solicit.length, `${pendentes} em aberto · ${aprovadas} aprovadas`, pendentes ? 'warn' : 'ok', 'anSolic')}
+      ${dashKpiCard('Holerites', totalHol, 'Assinados e pendentes por funcionário', 'ok', 'anHol')}
+      ${dashKpiCard('Taxa de aprovação', `${Math.round(aprovadas / totalSolic * 100)}%`, 'Dentro do filtro selecionado', 'ok', 'anApproval')}
+    </section>
+
+    <section class="dash-bento-pro analytics-bento-pro">
+      <article class="dash-card-pro col-8">
+        <div class="dash-card-head"><div><h3>Tendência histórica de compliance</h3><p>Últimos 6 meses · ${setor}</p></div></div>
+        ${lineChartPro([70, 74, 78, 82, 86, Math.round(aprovadas / totalSolic * 100) || dashboardData().compliance], ['Jan','Fev','Mar','Abr','Mai','Atual'])}
+      </article>
+      <article class="dash-card-pro col-4">
+        <div class="dash-card-head"><div><h3>Mix de status</h3><p>Solicitações do filtro</p></div></div>
+        ${donutMultiPro([
+          ['Aprovado', Math.round(aprovadas / totalSolic * 100), '#12544d'],
+          ['Em aberto', Math.round(pendentes / totalSolic * 100), '#c4956a'],
+          ['Negado', Math.round(negadas / totalSolic * 100), '#a1213d'],
+        ], `${Math.round(aprovadas / totalSolic * 100)}%`, 'aprovadas')}
+      </article>
+      <article class="dash-card-pro col-5">
+        <div class="dash-card-head"><div><h3>Funcionários por transportadora</h3><p>Vale transporte no filtro</p></div></div>
+        <div class="transport-chart-pro">${Object.entries(vtCount).map(([k,v]) => `<button data-transport-list="${k}" class="transport-row-pro"><strong>${k}</strong><i><b style="width:${v/Math.max(...Object.values(vtCount),1)*100}%"></b></i><span>${v}</span></button>`).join('') || '<p>Nenhum dado de transportadora.</p>'}</div>
+      </article>
+      <article class="dash-card-pro col-7">
+        <div class="dash-card-head"><div><h3>Detalhamento operacional</h3><p>Funcionários e solicitações do filtro</p></div></div>
+        <div class="data-table-pro">
+          <div class="data-table-head"><span>Funcionário</span><span>Setor</span><span>VT</span><span>Status</span></div>
+          ${fs.map(f => `<button class="data-table-row" data-employee="${f.nome}"><strong>${f.nome}</strong><span>${f.setor}</span><span>${f.transportadora.nome}</span><em>Ativo</em></button>`).join('')}
+        </div>
+      </article>
+      <article class="dash-card-pro col-12">
+        <div class="dash-card-head"><div><h3>Solicitações do filtro</h3><p>Pedidos enviados pelos funcionários</p></div></div>
+        <div class="data-table-pro request-table-pro">
+          <div class="data-table-head"><span>Tipo</span><span>Funcionário</span><span>Data</span><span>Status</span></div>
+          ${solicit.map(s => `<button class="data-table-row" data-request-status="${s.status}"><strong>${s.tipo}</strong><span>${s.funcionario || 'Funcionário'}</span><span>${s.data}</span><em>${s.status}</em></button>`).join('') || '<p>Nenhuma solicitação no filtro.</p>'}
+        </div>
+      </article>
+    </section>
   `;
   document.querySelectorAll('[data-filter]').forEach(btn => btn.onclick = () => { state.selectedSector = btn.dataset.filter; saveState(); renderAnalytics(); });
+  $('#clearAnalytics').onclick = () => { state.selectedSector = 'Todos'; saveState(); renderAnalytics(); };
   $('#anFunc').onclick = () => showFuncionariosModal(setor === 'Todos' ? null : setor);
   $('#anSolic').onclick = () => showSolicitacoesModal(null, solicit);
   $('#anHol').onclick = () => showHoleritesModal('todos', hol);
   $('#anExport').onclick = exportCSV;
+  $('#anApproval').onclick = () => showSolicitacoesModal('Aprovado', solicit.filter(s => s.status === 'Aprovado'));
+  document.querySelectorAll('[data-transport-list]').forEach(btn => btn.onclick = () => {
+    const nome = btn.dataset.transportList;
+    const lista = fs.filter(f => f.transportadora.nome === nome);
+    openModal(`Transportadora ${nome}`, 'Funcionários vinculados no filtro', `<div class="list">${lista.map(f => `<div class="list-item"><div><strong>${f.nome}</strong><span>${f.setor} · ${f.usuario}</span></div></div>`).join('')}</div>`);
+  });
+  document.querySelectorAll('[data-employee]').forEach(btn => btn.onclick = () => showFuncionariosModal(fs.find(f => f.nome === btn.dataset.employee)?.setor));
 }
+
 function countBy(arr, fn) { return arr.reduce((acc, item) => { const k = fn(item); acc[k] = (acc[k] || 0) + 1; return acc; }, {}); }
 
 function renderBeneficios() {
@@ -843,3 +927,108 @@ function renderExamesAdmin() {
 }
 function examesRows(dados) { return dados.map(e => `<button class="list-item"><div><strong>${e.funcionario}</strong><span>${e.setor} • ${e.titulo} • ${e.data}<br>${e.local} • Prazo: ${e.prazo}${e.comprovante ? `<br>Comprovante: ${e.comprovante}` : ''}</span></div><span class="badge ${e.status === 'Concluído' ? 'green' : e.status === 'Atrasado' ? 'red' : e.status === 'Agendado' ? 'blue' : 'yellow'}">${e.status}</span></button>`).join('') || '<p>Nenhum exame encontrado.</p>'; }
 function showExamesModal(list, title) { openModal(title, `${list.length} exame(s)`, `<div class="list">${examesRows(list)}</div>`); }
+
+/* =========================================================
+   POLIMENTO GERAL v3 — renderizações mais bonitas fora do dashboard
+   ========================================================= */
+function tileInitial(label){ return String(label || 'RH').split(/\s+/).filter(Boolean).map(p => p[0]).slice(0,2).join('').toUpperCase(); }
+function benefitIcon(id){ return ({valeTransporte:'VT', convenio:'SH', cestaBasica:'CB', auxilioCreche:'AC', farmacia:'FG'}[id] || 'RH'); }
+function pessoalIcon(id){ return ({ferias:'FE', holerites:'HO', faltas:'FA', exames:'EX', treinamentos:'TR', solicitacoes:'SO'}[id] || 'RH'); }
+function benefitCard(id, title, desc) {
+  const terms = benefitTerms(id);
+  const count = state.solicitacoes.filter(s => s.status === 'Esperando avaliação' && terms.some(t => `${s.tipo} ${s.descricao}`.toLowerCase().includes(t))).length;
+  return `<button class="card clickable menu-tile" data-benefit="${id}">
+    <div class="tile-top"><div class="tile-icon">${benefitIcon(id)}</div>${count ? `<span class="tile-count">${count}</span>` : '<span class="badge brown">Ativo</span>'}</div>
+    <div><h3 class="card-title">${title}</h3><p class="card-sub">${desc}</p></div>
+    <span class="tile-meta">Abrir benefício</span>
+  </button>`;
+}
+function pessoalTile(id,t,d,total=0){
+  return `<button class="card clickable menu-tile" data-pessoal="${id}">
+    <div class="tile-top"><div class="tile-icon">${pessoalIcon(id)}</div>${total ? `<span class="tile-count">${total}</span>` : '<span class="badge brown">RH</span>'}</div>
+    <div><h3 class="card-title">${t}</h3><p class="card-sub">${d}</p></div>
+    <span class="tile-meta">Abrir área</span>
+  </button>`;
+}
+function renderHome() {
+  setHeader('Home', 'Gerencie mural, avisos e votações do portal');
+  const mural = state.murais[state.muralAtual] || state.murais[0];
+  const votacao = state.votacoes[0];
+  const totalVotos = Object.keys(votacao.votosUsuarios || {}).length;
+  const faltam = funcionarios().filter(f => !(votacao.votosUsuarios || {})[f.nome]);
+  const d = dashboardData();
+
+  app.innerHTML = `
+    <div class="page-heading"><div><span class="eyebrow">Central administrativa</span><h2>Olá, ${currentAdmin()?.nome?.split(' ')[0] || 'Admin'}</h2><p>Controle o portal do funcionário com mural, avisos, enquetes, demandas e indicadores do RH.</p></div></div>
+    <div class="home-command-grid">
+      <section>
+        <div class="card carousel clickable" id="openMural">
+          <img src="${mural.imagem}" alt="${escapeHtml(mural.titulo)}" />
+          <div class="carousel-overlay"><span class="eyebrow" style="color:#ffd9c0">Mural ativo</span><h3>${mural.titulo}</h3><p>${mural.descricao}</p><small>${mural.titulo.toLowerCase().includes('treinamento') ? 'Abrir treinamentos' : 'Abrir dashboard'}</small></div>
+        </div>
+        <div class="carousel-controls">
+          <button class="outline-btn" id="prevMural">Anterior</button>
+          <div class="dots">${state.murais.map((_, i) => `<span class="dot ${i === state.muralAtual ? 'active' : ''}"></span>`).join('')}</div>
+          <button class="outline-btn" id="nextMural">Próximo</button>
+        </div>
+      </section>
+      <aside class="home-side-stack">
+        <section class="card">
+          <div class="card-header"><div><span class="eyebrow">Publicação rápida</span><h3 class="card-title">Adicionar conteúdo</h3><p class="card-sub">Crie conteúdos visíveis para todos os funcionários.</p></div></div>
+          <div class="home-action-grid"><button class="home-action-btn" id="newMural"><strong>Mural</strong><span>Imagem e destaque</span></button><button class="home-action-btn" id="newAviso"><strong>Aviso</strong><span>Comunicado rápido</span></button><button class="home-action-btn" id="newVotacao"><strong>Votação</strong><span>Enquete interna</span></button></div>
+        </section>
+        <section class="card">
+          <span class="eyebrow">Resumo operacional</span>
+          <div class="mini-metrics"><button onclick="showFuncionariosModal()"><strong>${d.totalFuncionarios}</strong><span>funcionários</span></button><button onclick="showDemandasModal()"><strong>${d.pendentes + d.holeritesPendentes}</strong><span>demandas abertas</span></button><button onclick="setPage('dashboard')"><strong>${d.compliance}%</strong><span>conformidade</span></button></div>
+        </section>
+      </aside>
+    </div>
+    <div class="grid two" style="margin-top:22px">
+      <section class="card"><div class="card-header"><div><span class="eyebrow">Comunicados</span><h3 class="card-title">Avisos recentes</h3></div></div><div class="list">${state.avisos.map(a => `<div class="list-item"><div><strong>${a.titulo}</strong><span>${a.descricao}</span></div><span class="badge brown">${a.data || 'Hoje'}</span></div>`).join('')}</div></section>
+      <section class="card home-vote-card"><div class="card-header"><div><span class="eyebrow">Participação</span><h3 class="card-title">Votação ativa</h3><p class="card-sub">Clique para ver quem votou e quem ainda falta votar.</p></div><button class="outline-btn" id="openVotes">Ver funcionários</button></div><h3>${votacao.pergunta}</h3>${votacao.opcoes.map(op => { const count = Object.values(votacao.votosUsuarios || {}).filter(v => Number(v) === Number(op.id)).length; const pct = totalVotos ? Math.round(count / totalVotos * 100) : 0; return `<div class="vote-option"><div class="vote-progress" style="width:${pct}%"></div><div class="vote-content"><span>${op.texto}</span><span>${pct}%</span></div><small>${count} voto(s)</small></div>`; }).join('')}<div class="actions"><span class="badge green">${totalVotos} votaram</span><span class="badge yellow">${faltam.length} faltam votar</span></div></section>
+    </div>`;
+  $('#prevMural').onclick = () => { state.muralAtual = (state.muralAtual - 1 + state.murais.length) % state.murais.length; saveState(); renderHome(); };
+  $('#nextMural').onclick = () => { state.muralAtual = (state.muralAtual + 1) % state.murais.length; saveState(); renderHome(); };
+  $('#openMural').onclick = () => mural.titulo.toLowerCase().includes('treinamento') ? openTreinamentos() : setPage('dashboard');
+  $('#openVotes').onclick = showVotesModal;
+  $('#newMural').onclick = () => openContentModal('Mural');
+  $('#newAviso').onclick = () => openContentModal('Aviso');
+  $('#newVotacao').onclick = () => openVotingEditor();
+}
+function renderBeneficios() {
+  setHeader('Benefícios', 'Administração dos benefícios e solicitações');
+  if (state.selectedBenefit) return renderBenefitDetail(state.selectedBenefit);
+  const beneficios = [
+    ['valeTransporte','Vale transporte','Transportadoras, créditos, usuários vinculados e solicitações de VT.'],
+    ['convenio','Santa Helena Saúde','Carteirinha, dependentes, documentos e solicitações do plano.'],
+    ['cestaBasica','Cesta básica','Formulários de entrega/retirada, assinatura e cópias para o RH.'],
+    ['auxilioCreche','Auxílio creche','Documentos, dependentes e análise de pedidos de auxílio.'],
+    ['farmacia','Farma Gold','Regras por salário, auxílio fixo e rede aceita.'],
+  ];
+  app.innerHTML = `<div class="page-heading"><div><span class="eyebrow">Benefícios corporativos</span><h2>Benefícios</h2><p>Acompanhe todas as solicitações e acesse painéis específicos de cada benefício.</p></div></div><div class="search-box"><input id="benefitSearch" placeholder="Pesquisar benefício ou solicitação" /></div><div class="grid three" id="benefitGrid">${beneficios.map(([id,t,d]) => benefitCard(id,t,d)).join('')}</div>`;
+  const bind = () => document.querySelectorAll('[data-benefit]').forEach(btn => btn.onclick = () => { state.selectedBenefit = btn.dataset.benefit; renderBenefitDetail(state.selectedBenefit); });
+  bind();
+  $('#benefitSearch').oninput = (e) => { const q = e.target.value.toLowerCase(); $('#benefitGrid').innerHTML = beneficios.filter(b => b.join(' ').toLowerCase().includes(q)).map(([id,t,d]) => benefitCard(id,t,d)).join(''); bind(); };
+}
+function renderPessoal() {
+  setHeader('Pessoal', 'Administração de dados e solicitações dos funcionários');
+  if (state.selectedPessoal) return renderPessoalDetail(state.selectedPessoal);
+  const d = dashboardData();
+  const demandas = d.pendentes + d.holeritesPendentes;
+  const itens = [
+    ['ferias','Controle de férias','Pessoas de férias, próximas voltas, legenda e PDF.'],
+    ['holerites','Holerites','Cópias assinadas e pendências por funcionário.'],
+    ['faltas','Faltas e atestados','Justificativas, documentos e apontamentos.'],
+    ['exames','Exames periódicos','Comprovantes e pendências ocupacionais.'],
+    ['treinamentos','Treinamentos','Cadastro de conteúdos e conclusões dos funcionários.'],
+    ['solicitacoes','Solicitações gerais','Tudo que foi enviado pelos funcionários ao RH.'],
+  ];
+  const counts = { ferias:state.ferias?.length || 0, holerites:d.holeritesPendentes, faltas:(state.faltasAdmin || []).filter(f => f.status !== 'Justificada').length, exames:(state.examesAdmin || []).filter(e => ['Pendente','Atrasado'].includes(e.status)).length, treinamentos:(state.conclusoesTreinamento || []).length, solicitacoes:d.pendentes };
+  app.innerHTML = `<div class="page-heading"><div><span class="eyebrow">Rotina de RH</span><h2>Pessoal</h2><p>Demandas, documentos, treinamentos, férias e registros administrativos dos funcionários.</p></div></div><button class="card kpi-card clickable demand-card" id="openDemandasPessoal"><div class="kpi-value">${demandas}</div><div><div class="kpi-label">Demandas em aberto</div><div class="kpi-trend">Solicitações esperando avaliação e holerites pendentes</div></div></button><div class="grid two" style="margin-bottom:18px"><button class="card clickable shortcut-card" id="dashShortcut"><div class="tile-icon">DB</div><div><h3 class="card-title">Dashboard executivo</h3><p class="card-sub">Resumo de indicadores, alertas e setores.</p></div></button><button class="card clickable shortcut-card" id="analyticsShortcut"><div class="tile-icon">AN</div><div><h3 class="card-title">Analytics & relatórios</h3><p class="card-sub">Filtros por setor e detalhes operacionais.</p></div></button></div><div class="search-box"><input id="pessoalSearch" placeholder="Pesquisar área, funcionário ou solicitação" /></div><div class="grid three" id="pessoalGrid">${itens.map(([id,t,d]) => pessoalTile(id,t,d,counts[id])).join('')}</div>`;
+  $('#openDemandasPessoal').onclick = showDemandasModal;
+  $('#dashShortcut').onclick = () => setPage('dashboard');
+  $('#analyticsShortcut').onclick = () => setPage('analytics');
+  const bind = () => document.querySelectorAll('[data-pessoal]').forEach(btn => btn.onclick = () => { if (btn.dataset.pessoal === 'holerites') showHoleritesPage(); else { state.selectedPessoal = btn.dataset.pessoal; renderPessoalDetail(state.selectedPessoal); } });
+  bind();
+  $('#pessoalSearch').oninput = e => { const q = e.target.value.toLowerCase(); $('#pessoalGrid').innerHTML = itens.filter(i => i.join(' ').toLowerCase().includes(q)).map(([id,t,d]) => pessoalTile(id,t,d,counts[id])).join(''); bind(); };
+}
