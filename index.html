@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
   <section class="login-screen" id="loginScreen">
     <div class="login-card">
       <div class="login-brand">
@@ -20,15 +21,15 @@
       <div class="login-copy">
         <span class="eyebrow">Acesso administrativo</span>
         <h1>Entrar no painel do RH</h1>
-        <p>Use um usuário administrador cadastrado no <strong>database.js</strong>.</p>
+        <p>Use um usuário administrador cadastrado no sistema ou carregado da API.</p>
       </div>
 
       <form class="login-form" id="loginForm">
-        <label>Usuário</label>
-        <input id="loginUser" type="text" placeholder="Ex: 01@adm" autocomplete="username" />
+        <label for="loginUser">Usuário</label>
+        <input id="loginUser" type="text" placeholder="Ex: 01@adm" autocomplete="username" required />
 
-        <label>Senha</label>
-        <input id="loginPass" type="password" placeholder="Ex: 1234" autocomplete="current-password" />
+        <label for="loginPass">Senha</label>
+        <input id="loginPass" type="password" placeholder="Ex: 1234" autocomplete="current-password" required />
 
         <button class="primary-btn full" type="submit">Entrar</button>
         <p class="login-error hidden" id="loginError">Usuário ou senha inválidos.</p>
@@ -59,8 +60,8 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="outline-btn full" id="fontMinus">A-</button>
-        <button class="outline-btn full" id="fontPlus">A+</button>
+        <button class="outline-btn full" id="fontMinus" aria-label="Diminuir tamanho da fonte">A-</button>
+        <button class="outline-btn full" id="fontPlus" aria-label="Aumentar tamanho da fonte">A+</button>
       </div>
     </aside>
 
@@ -68,13 +69,13 @@
       <div class="top-status-area"></div>
 
       <header class="topbar">
-        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu">Menu</button>
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu lateral">Menu</button>
         <div>
           <h1 id="pageTitle">Home</h1>
           <p id="pageSubtitle">Gerencie o portal dos funcionários</p>
         </div>
         <div class="profile-area">
-          <button class="profile-pill" id="profileBtn">ADM</button>
+          <button class="profile-pill" id="profileBtn" aria-haspopup="true" aria-label="Menu do perfil">ADM</button>
           <div class="profile-dropdown hidden" id="profileDropdown">
             <button data-page="perfil">Ver meu perfil</button>
             <button class="danger" id="logoutBtn">Sair</button>
@@ -87,13 +88,13 @@
   </div>
 
   <div class="modal-backdrop hidden" id="modalBackdrop">
-    <div class="modal-card" id="modalCard">
+    <div class="modal-card" id="modalCard" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalSubtitle">
       <div class="modal-header">
         <div>
           <h2 id="modalTitle">Título</h2>
           <p id="modalSubtitle">Detalhes</p>
         </div>
-        <button class="icon-close" id="modalClose">Fechar</button>
+        <button class="icon-close" id="modalClose" aria-label="Fechar modal">Fechar</button>
       </div>
       <div id="modalBody"></div>
     </div>
