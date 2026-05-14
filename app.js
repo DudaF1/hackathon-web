@@ -225,7 +225,91 @@ function pessoalInfo(id){
   if(id==='treinamentos') return `<section class="card"><h3 class="card-title">Treinamentos publicados</h3><div class="list">${state.treinamentos.map(t => listItem(t.titulo, `${t.duracao}<br>${t.link}`)).join('')}</div></section><section class="card" style="margin-top:16px"><h3 class="card-title">Conclusões dos funcionários</h3><div class="list">${state.conclusoesTreinamento.map(c => listItem(c.funcionario, `${c.treinamento}<br>Concluído em ${c.dataConclusao}`, c.progresso)).join('')}</div></section>`;
   return `<div class="list">${state.solicitacoes.map(requestItem).join('')}</div>`;
 }
-window.showHolerites = (nome) => { const f = state.holeritesAdmin.find(x=>x.nome===nome); openModal(`Holerites de ${nome}`, f?.setor||'', `<div class="list">${(f?.holerites||[]).map(h => listItem(`${h.mes} • ${h.competencia}`, `Valor líquido: ${h.valorLiquido}<br>Protocolo: ${h.protocoloDocusign}`, h.status)).join('')}</div>`); };
+function jsArg(value){
+  return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+function holeriteActions(funcionario, holerite){
+  if(holerite.status !== 'Assinado'){
+    return `<div class="muted-note">Download disponível somente após assinatura.</div>`;
+  }
+
+  return `<button class="outline-btn small-btn" onclick="downloadHolerite('${jsArg(funcionario.nome)}', ${holerite.id})">Baixar PDF</button>`;
+}
+function holeriteItem(funcionario, holerite){
+  const assinado = holerite.status === 'Assinado';
+  const detalhes = `Valor líquido: ${text(holerite.valorLiquido)}<br>Protocolo: ${text(holerite.protocoloDocusign)}${holerite.dataAssinatura ? `<br>Assinado em: ${text(holerite.dataAssinatura)}` : ''}<div class="item-actions">${holeriteActions(funcionario, holerite)}</div>`;
+  return listItem(`${holerite.mes} • ${holerite.competencia}`, detalhes, assinado ? 'Assinado' : holerite.status);
+}
+window.showHolerites = (nome) => {
+  const f = state.holeritesAdmin.find(x=>x.nome===nome);
+  openModal(
+    `Holerites de ${nome}`,
+    f?.setor || '',
+    `<div class="list">${(f?.holerites||[]).map(h => holeriteItem(f, h)).join('')}</div>`
+  );
+};
+function criarHtmlHoleriteWeb(funcionario, holerite){
+  const linhas = [
+    ['001','SALÁRIO BASE','220:00','2.850,00',''],
+    ['400','COMISSÃO','','420,00',''],
+    ['420','REPOUSO REMUNERADO','','180,00',''],
+    ['903','INSS','','','312,65'],
+    ['904','VALE TRANSPORTE','','','90,00'],
+  ].map(l => `<tr><td class="codigo">${l[0]}</td><td>${l[1]}</td><td class="referencia">${l[2]}</td><td class="money">${l[3]}</td><td class="money">${l[4]}</td></tr>`).join('');
+
+  return `<!DOCTYPE html>
+  <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8" />
+      <title>Holerite ${text(funcionario.nome)} ${text(holerite.competencia)}</title>
+      <style>
+        *{box-sizing:border-box} body{font-family:Arial,sans-serif;color:#111;margin:0;padding:24px;background:#fff}.recibo{border:1px solid #111;width:100%;max-width:900px;margin:0 auto}.topo{display:flex;border-bottom:1px solid #111}.empregador{width:52%;padding:10px;border-right:1px solid #111;font-size:11px;line-height:1.45}.titulo{flex:1;padding:10px;text-align:right}h1{font-size:20px;margin:0 0 6px}.ref{font-size:11px}.funcionario{display:grid;grid-template-columns:120px 1fr 180px;border-bottom:1px solid #111}.box{padding:7px;border-right:1px solid #111;min-height:34px}.box:last-child{border-right:0}.label{font-size:9px;display:block;color:#333}.valor{font-size:13px;font-weight:700}table{width:100%;border-collapse:collapse}th,td{border-right:1px solid #111;font-size:12px;padding:6px}th{border-bottom:1px solid #111;text-align:center;background:#f7f7f7}th:last-child,td:last-child{border-right:0}.codigo{width:55px;text-align:right}.referencia{width:90px;text-align:center}.money{width:120px;text-align:right}.spacer td{height:180px}.mensagens{border-top:1px solid #111;border-bottom:1px solid #111;padding:8px;font-size:11px;line-height:1.45}.totais{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #111}.total{padding:8px;border-right:1px solid #111;text-align:right}.total:last-child{border-right:0;font-weight:700}.assinatura{margin:56px auto 0;text-align:center;font-size:11px;max-width:360px}.linha{border-top:1px solid #111;margin-bottom:8px}@media print{body{padding:0}.no-print{display:none}}
+      </style>
+    </head>
+    <body>
+      <div class="recibo">
+        <div class="topo">
+          <div class="empregador"><strong>EMPREGADOR</strong><br>Lipson Cosméticos LTDA<br>Rua das Indústrias, 120 - Joanópolis/SP<br>CNPJ 12.345.678/0001-90</div>
+          <div class="titulo"><h1>Recibo de Pagamento de Salário</h1><div class="ref">Referente ao mês ${text(holerite.competencia)}</div></div>
+        </div>
+        <div class="funcionario">
+          <div class="box"><span class="label">SETOR</span><span class="valor">${text(funcionario.setor)}</span></div>
+          <div class="box"><span class="label">NOME DO FUNCIONÁRIO</span><span class="valor">${text(funcionario.nome)}</span></div>
+          <div class="box"><span class="label">FUNÇÃO</span><span class="valor">${text(funcionario.cargo)}</span></div>
+        </div>
+        <table><thead><tr><th class="codigo">Cód.</th><th>Descrição</th><th class="referencia">Ref.</th><th class="money">Proventos</th><th class="money">Descontos</th></tr></thead><tbody>${linhas}<tr class="spacer"><td colspan="5"></td></tr></tbody></table>
+        <div class="mensagens"><strong>MENSAGENS</strong><br>Holerite assinado digitalmente. Protocolo: ${text(holerite.protocoloDocusign)}.</div>
+        <div class="totais"><div class="total"><span class="label">Total dos Vencimentos</span><span class="valor">3.450,00</span></div><div class="total"><span class="label">Total dos Descontos</span><span class="valor">402,65</span></div><div class="total"><span class="label">Líquido a Receber</span><span class="valor">${text(String(holerite.valorLiquido).replace('R$ ',''))}</span></div></div>
+      </div>
+      <div class="assinatura"><div class="linha"></div>ASSINATURA DO FUNCIONÁRIO<br><strong>${text(funcionario.nome)}</strong><br>Assinado em ${text(holerite.dataAssinatura || 'data registrada')}</div>
+      <script>window.onload = () => { window.print(); };</script>
+    </body>
+  </html>`;
+}
+window.downloadHolerite = (nome, holeriteId) => {
+  const funcionario = state.holeritesAdmin.find(f => f.nome === nome);
+  const holerite = funcionario?.holerites.find(h => Number(h.id) === Number(holeriteId));
+
+  if(!funcionario || !holerite){
+    alert('Holerite não encontrado.');
+    return;
+  }
+
+  if(holerite.status !== 'Assinado'){
+    alert('Este holerite ainda não foi assinado. O PDF só pode ser baixado depois da assinatura.');
+    return;
+  }
+
+  const janela = window.open('', '_blank');
+  if(!janela){
+    alert('O navegador bloqueou a janela de impressão. Libere pop-ups para baixar o PDF.');
+    return;
+  }
+
+  janela.document.open();
+  janela.document.write(criarHtmlHoleriteWeb(funcionario, holerite));
+  janela.document.close();
+};
 function openTreinamentos(){ state.page='pessoal'; state.selectedPessoal='treinamentos'; save(); render(); }
 
 function calcData(){
